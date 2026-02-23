@@ -60,7 +60,7 @@
     - 数据存储方案
     - 输出: `docs/tech/data_model.md`
 
-- [ ] **API 设计规范** (Priority: P1)
+- [x] **API 设计规范** (Priority: P1)
     - RESTful API 设计原则
     - 接口版本管理
     - 错误码规范
