@@ -1,0 +1,5 @@
+name: skill-creator
+version: 1.0.0
+description: Meta-skill for scaffolding and validating new Trae Agent Skills.
+authors:
+  - Trae User
