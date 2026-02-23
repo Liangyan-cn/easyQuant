@@ -15,8 +15,16 @@
 
 ### 强制任务
 
-- [ ] 里程碑对齐与方向校准 (Milestone Alignment & Direction Check)
-- [ ] Sprint 启动检查 (Sprint Initialization Checklist)
+- [x] 里程碑对齐与方向校准 (Milestone Alignment & Direction Check)
+    - ✅ 愿景一致性: backlog.md 和 milestones.md 愿景一致
+    - ✅ M0 目标对齐: Sprint 目标与 M0 里程碑匹配
+    - ✅ 任务完整性: M0 所有任务已分解到 kanban.md
+    - ✅ 输出路径: 所有文档输出路径已定义
+- [x] Sprint 启动检查 (Sprint Initialization Checklist)
+    - ✅ 目录结构: docs/tech, docs/product, docs/reports, docs/sprints 已创建
+    - ✅ Git 状态: 工作区干净，已提交到 main 分支
+    - ✅ 技能就绪: 5 个 Agent Skills 已配置
+    - ✅ 工具就绪: init_workspace, analyze_docs, generate_index 可用
 
 ### 产品文档
 
