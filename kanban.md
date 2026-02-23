@@ -61,13 +61,13 @@
 ### 项目管理
 
 - [ ] **开发环境搭建指南** (Priority: P1)
-    - 输出: `docs/dev/setup.md`
+    - 输出: `docs/tech/setup.md`
 
 - [ ] **代码规范与 Git 工作流** (Priority: P1)
-    - 输出: `docs/dev/coding_standards.md`
+    - 输出: `docs/tech/coding_standards.md`
 
 - [ ] **CI/CD 流程设计** (Priority: P2)
-    - 输出: `docs/dev/cicd.md`
+    - 输出: `docs/tech/cicd.md`
 
 ## 📦 待办池 (Backlog)
 
