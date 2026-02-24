@@ -56,6 +56,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({
         }));
         setOptions(newOptions);
       } catch {
+        // ignore search errors
       } finally {
         setLoading(false);
       }
@@ -150,6 +151,7 @@ export const MultiStockSelector: React.FC<MultiStockSelectorProps> = ({
         ];
         setOptions(mergedOptions);
       } catch {
+        // ignore search errors
       } finally {
         setLoading(false);
       }

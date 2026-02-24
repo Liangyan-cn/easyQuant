@@ -20,15 +20,14 @@ import {
   InputNumber,
   Select,
   Alert,
-  Tooltip,
 } from 'antd';
-import { ArrowLeftOutlined, PlayCircleOutlined, LineChartOutlined, DeleteOutlined, ReloadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlayCircleOutlined, LineChartOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
 import { strategyApi } from '@/api/strategy';
 import type { Strategy, Backtest, BacktestStatus, BacktestResult, EquityCurvePoint } from '@/types/strategy';
-import { STRATEGY_TYPE_LABELS, STRATEGY_STATUS_LABELS, BACKTEST_STATUS_LABELS } from '@/types/strategy';
+import { STRATEGY_TYPE_LABELS, BACKTEST_STATUS_LABELS } from '@/types/strategy';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;

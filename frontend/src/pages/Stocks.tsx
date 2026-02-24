@@ -34,6 +34,7 @@ const StockListTab: React.FC = () => {
         const response = await stockPoolApi.getPoolList({ page: 1, size: 100 });
         setPools(response.data.items);
       } catch {
+        // ignore pool fetch errors
       }
     };
     fetchPools();

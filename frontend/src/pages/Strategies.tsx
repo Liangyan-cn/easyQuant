@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm, Alert, Tooltip } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LineChartOutlined, CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm, Alert } from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LineChartOutlined, CopyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
@@ -11,11 +11,6 @@ import { STRATEGY_TYPE_LABELS, STRATEGY_STATUS_LABELS } from '@/types/strategy';
 const { Title } = Typography;
 
 const typeOptions = Object.entries(STRATEGY_TYPE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-
-const statusOptions = Object.entries(STRATEGY_STATUS_LABELS).map(([value, label]) => ({
   value,
   label,
 }));
@@ -82,10 +77,6 @@ const Strategies: React.FC = () => {
 
   const handleTypeChange = (value: StrategyType | undefined) => {
     setParams((prev) => ({ ...prev, strategy_type: value, page: 1 }));
-  };
-
-  const handleStatusChange = (value: StrategyStatus | undefined) => {
-    setParams((prev) => ({ ...prev, status: value, page: 1 }));
   };
 
   const handleCreate = () => {

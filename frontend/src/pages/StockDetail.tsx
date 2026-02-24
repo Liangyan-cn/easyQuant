@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space, Table, Tabs, Row, Col, Statistic, Alert, Result } from 'antd';
+import { Card, Descriptions, Segmented, Spin, Typography, Button, Space, Table, Tabs, Row, Col, Statistic, Alert, Result } from 'antd';
 import { ArrowLeftOutlined, ArrowUpOutlined, ArrowDownOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
