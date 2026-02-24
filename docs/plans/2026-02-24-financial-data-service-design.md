@@ -185,13 +185,36 @@ FINANCIAL_CACHE_TTL_SECONDS = 3600  # 1小时 (财务数据更新频率低)
 
 ## 6. 错误处理
 
-与现有 `data_service.py` 模式一致：
+采用 **Fail-Fast** 策略，避免 Mock 数据掩盖真实问题：
 
-1. **AKShare 未安装** → 返回 Mock 数据
-2. **数据解析错误** → 返回 Mock 数据
-3. **网络错误** → 返回 Mock 数据
+1. **AKShare 未安装** → 抛出 `ServiceUnavailableError`，提示安装依赖
+2. **数据解析错误** → 抛出 `DataParseError`，记录详细错误信息
+3. **网络错误** → 抛出 `DataFetchError`，提示网络问题
 
-所有错误记录到日志，不向用户暴露内部错误。
+**原则**:
+- ❌ **禁止返回 Mock 数据**：Mock 数据会掩盖问题，导致后续计算错误
+- ✅ **明确报错**：让用户/开发者知道数据获取失败，及时介入修复
+- ✅ **详细日志**：记录完整错误堆栈，便于排查
+- ✅ **友好提示**：API 返回清晰的错误信息和建议操作
+
+**异常类型**:
+```python
+class DataServiceError(Exception):
+    """数据服务基础异常"""
+    pass
+
+class ServiceUnavailableError(DataServiceError):
+    """服务不可用（如依赖未安装）"""
+    pass
+
+class DataFetchError(DataServiceError):
+    """数据获取失败（网络错误等）"""
+    pass
+
+class DataParseError(DataServiceError):
+    """数据解析失败"""
+    pass
+```
 
 ---
 
@@ -201,12 +224,13 @@ FINANCIAL_CACHE_TTL_SECONDS = 3600  # 1小时 (财务数据更新频率低)
 
 - 测试每个财务数据获取函数
 - 测试缓存机制
-- 测试 Mock 数据降级
+- 测试错误处理（异常抛出）
 
 ### 7.2 集成测试
 
 - 测试 API 端点响应
 - 测试数据格式正确性
+- 测试错误响应格式（HTTP 状态码、错误信息）
 
 ---
 
@@ -473,195 +497,253 @@ git commit -m "feat: add mock data generators for financial data"
 **Files:**
 - Modify: `backend/app/services/data_service.py`
 
-**Step 1: 添加 AKShare 数据获取函数**
+**Step 1: 添加异常类（在文件顶部，缓存变量之前）**
+
+```python
+class DataServiceError(Exception):
+    """数据服务基础异常"""
+    pass
+
+class ServiceUnavailableError(DataServiceError):
+    """服务不可用（如依赖未安装）"""
+    pass
+
+class DataFetchError(DataServiceError):
+    """数据获取失败（网络错误等）"""
+    pass
+
+class DataParseError(DataServiceError):
+    """数据解析失败"""
+    pass
+```
+
+**Step 2: 添加 AKShare 数据获取函数**
 
 ```python
 def _fetch_balance_sheet_from_akshare(code: str, limit: int = 8) -> list["BalanceSheetItem"]:
     from app.schemas.stock import BalanceSheetItem
     try:
         import akshare as ak
+    except ImportError:
+        logger.error("AKShare not installed")
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
         symbol = f"SH{code}" if code.startswith("6") else f"SZ{code}"
         df = ak.stock_balance_sheet_by_report_em(symbol=symbol)
-        items = []
-        for _, row in df.head(limit).iterrows():
-            try:
-                report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                continue
-            items.append(BalanceSheetItem(
-                report_date=report_date,
-                total_assets=row.get("TOTAL_ASSETS"),
-                total_liabilities=row.get("TOTAL_LIABILITIES"),
-                total_equity=row.get("TOTAL_EQUITY"),
-                current_assets=row.get("TOTAL_CURRENT_ASSETS"),
-                current_liabilities=row.get("TOTAL_CURRENT_LIAB"),
-                cash=row.get("MONETARYFUNDS"),
-                inventory=row.get("INVENTORY"),
-                accounts_receivable=row.get("ACCOUNTS_RECE"),
-            ))
-        logger.info(f"Fetched {len(items)} balance sheet records for {code}")
-        return items if items else _get_mock_balance_sheet(code, limit)
-    except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_balance_sheet(code, limit)
     except Exception as e:
-        logger.error(f"Error fetching balance sheet for {code}: {e}")
-        return _get_mock_balance_sheet(code, limit)
+        logger.error(f"Failed to fetch balance sheet for {code}: {e}")
+        raise DataFetchError(f"获取资产负债表失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.head(limit).iterrows():
+        try:
+            report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to parse report_date for {code}: {e}")
+            continue
+        items.append(BalanceSheetItem(
+            report_date=report_date,
+            total_assets=row.get("TOTAL_ASSETS"),
+            total_liabilities=row.get("TOTAL_LIABILITIES"),
+            total_equity=row.get("TOTAL_EQUITY"),
+            current_assets=row.get("TOTAL_CURRENT_ASSETS"),
+            current_liabilities=row.get("TOTAL_CURRENT_LIAB"),
+            cash=row.get("MONETARYFUNDS"),
+            inventory=row.get("INVENTORY"),
+            accounts_receivable=row.get("ACCOUNTS_RECE"),
+        ))
+    
+    if not items:
+        raise DataParseError(f"资产负债表数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} balance sheet records for {code}")
+    return items
 
 
 def _fetch_income_from_akshare(code: str, limit: int = 8) -> list["IncomeStatementItem"]:
     from app.schemas.stock import IncomeStatementItem
     try:
         import akshare as ak
+    except ImportError:
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
         symbol = f"SH{code}" if code.startswith("6") else f"SZ{code}"
         df = ak.stock_profit_sheet_by_report_em(symbol=symbol)
-        items = []
-        for _, row in df.head(limit).iterrows():
-            try:
-                report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                continue
-            revenue = row.get("TOTAL_OPERATE_INCOME")
-            cost = row.get("TOTAL_OPERATE_COST")
-            items.append(IncomeStatementItem(
-                report_date=report_date,
-                revenue=revenue,
-                operating_profit=row.get("OPERATE_PROFIT"),
-                net_profit=row.get("NETPROFIT"),
-                gross_profit=(revenue - cost) if revenue and cost else None,
-                operating_cost=cost,
-            ))
-        logger.info(f"Fetched {len(items)} income records for {code}")
-        return items if items else _get_mock_income_statement(code, limit)
-    except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_income_statement(code, limit)
     except Exception as e:
-        logger.error(f"Error fetching income for {code}: {e}")
-        return _get_mock_income_statement(code, limit)
+        logger.error(f"Failed to fetch income for {code}: {e}")
+        raise DataFetchError(f"获取利润表失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.head(limit).iterrows():
+        try:
+            report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        revenue = row.get("TOTAL_OPERATE_INCOME")
+        cost = row.get("TOTAL_OPERATE_COST")
+        items.append(IncomeStatementItem(
+            report_date=report_date,
+            revenue=revenue,
+            operating_profit=row.get("OPERATE_PROFIT"),
+            net_profit=row.get("NETPROFIT"),
+            gross_profit=(revenue - cost) if revenue and cost else None,
+            operating_cost=cost,
+        ))
+    
+    if not items:
+        raise DataParseError(f"利润表数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} income records for {code}")
+    return items
 
 
 def _fetch_cash_flow_from_akshare(code: str, limit: int = 8) -> list["CashFlowItem"]:
     from app.schemas.stock import CashFlowItem
     try:
         import akshare as ak
+    except ImportError:
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
         symbol = f"SH{code}" if code.startswith("6") else f"SZ{code}"
         df = ak.stock_cash_flow_sheet_by_report_em(symbol=symbol)
-        items = []
-        for _, row in df.head(limit).iterrows():
-            try:
-                report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                continue
-            items.append(CashFlowItem(
-                report_date=report_date,
-                operating_cash_flow=row.get("NETCASH_OPERATE"),
-                investing_cash_flow=row.get("NETCASH_INVEST"),
-                financing_cash_flow=row.get("NETCASH_FINANCE"),
-                net_cash_flow=row.get("CCE_ADD"),
-            ))
-        logger.info(f"Fetched {len(items)} cash flow records for {code}")
-        return items if items else _get_mock_cash_flow(code, limit)
-    except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_cash_flow(code, limit)
     except Exception as e:
-        logger.error(f"Error fetching cash flow for {code}: {e}")
-        return _get_mock_cash_flow(code, limit)
+        logger.error(f"Failed to fetch cash flow for {code}: {e}")
+        raise DataFetchError(f"获取现金流量表失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.head(limit).iterrows():
+        try:
+            report_date = datetime.strptime(str(row.get("REPORT_DATE", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        items.append(CashFlowItem(
+            report_date=report_date,
+            operating_cash_flow=row.get("NETCASH_OPERATE"),
+            investing_cash_flow=row.get("NETCASH_INVEST"),
+            financing_cash_flow=row.get("NETCASH_FINANCE"),
+            net_cash_flow=row.get("CCE_ADD"),
+        ))
+    
+    if not items:
+        raise DataParseError(f"现金流量表数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} cash flow records for {code}")
+    return items
 
 
 def _fetch_indicators_from_akshare(code: str, limit: int = 8) -> list["FinancialIndicatorItem"]:
     from app.schemas.stock import FinancialIndicatorItem
     try:
         import akshare as ak
-        df = ak.stock_financial_analysis_indicator(symbol=code)
-        items = []
-        for _, row in df.head(limit).iterrows():
-            try:
-                report_date = datetime.strptime(str(row.get("日期", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                continue
-            items.append(FinancialIndicatorItem(
-                report_date=report_date,
-                roe=row.get("净资产收益率"),
-                roa=row.get("总资产报酬率"),
-                gross_margin=row.get("销售毛利率"),
-                net_margin=row.get("销售净利率"),
-                debt_ratio=row.get("资产负债率"),
-                current_ratio=row.get("流动比率"),
-            ))
-        logger.info(f"Fetched {len(items)} indicator records for {code}")
-        return items if items else _get_mock_financial_indicators(code, limit)
     except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_financial_indicators(code, limit)
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
+        df = ak.stock_financial_analysis_indicator(symbol=code)
     except Exception as e:
-        logger.error(f"Error fetching indicators for {code}: {e}")
-        return _get_mock_financial_indicators(code, limit)
+        logger.error(f"Failed to fetch indicators for {code}: {e}")
+        raise DataFetchError(f"获取财务指标失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.head(limit).iterrows():
+        try:
+            report_date = datetime.strptime(str(row.get("日期", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        items.append(FinancialIndicatorItem(
+            report_date=report_date,
+            roe=row.get("净资产收益率"),
+            roa=row.get("总资产报酬率"),
+            gross_margin=row.get("销售毛利率"),
+            net_margin=row.get("销售净利率"),
+            debt_ratio=row.get("资产负债率"),
+            current_ratio=row.get("流动比率"),
+        ))
+    
+    if not items:
+        raise DataParseError(f"财务指标数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} indicator records for {code}")
+    return items
 
 
 def _fetch_valuation_from_akshare(code: str, limit: int = 30) -> list["ValuationItem"]:
     from app.schemas.stock import ValuationItem
     try:
         import akshare as ak
+    except ImportError:
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
         symbol = f"sh{code}" if code.startswith("6") else f"sz{code}"
         df = ak.stock_a_lg_indicator(symbol=symbol)
-        items = []
-        for _, row in df.tail(limit).iloc[::-1].iterrows():
-            try:
-                trade_date = datetime.strptime(str(row.get("trade_date", "")), "%Y%m%d").date()
-            except (ValueError, TypeError):
-                continue
-            items.append(ValuationItem(
-                date=trade_date,
-                pe_ttm=row.get("pe_ttm"),
-                pb=row.get("pb"),
-                ps_ttm=row.get("ps_ttm"),
-                market_cap=row.get("total_mv"),
-            ))
-        logger.info(f"Fetched {len(items)} valuation records for {code}")
-        return items if items else _get_mock_valuation(code, limit)
-    except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_valuation(code, limit)
     except Exception as e:
-        logger.error(f"Error fetching valuation for {code}: {e}")
-        return _get_mock_valuation(code, limit)
+        logger.error(f"Failed to fetch valuation for {code}: {e}")
+        raise DataFetchError(f"获取估值指标失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.tail(limit).iloc[::-1].iterrows():
+        try:
+            trade_date = datetime.strptime(str(row.get("trade_date", "")), "%Y%m%d").date()
+        except (ValueError, TypeError):
+            continue
+        items.append(ValuationItem(
+            date=trade_date,
+            pe_ttm=row.get("pe_ttm"),
+            pb=row.get("pb"),
+            ps_ttm=row.get("ps_ttm"),
+            market_cap=row.get("total_mv"),
+        ))
+    
+    if not items:
+        raise DataParseError(f"估值指标数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} valuation records for {code}")
+    return items
 
 
 def _fetch_dividend_from_akshare(code: str, limit: int = 10) -> list["DividendItem"]:
     from app.schemas.stock import DividendItem
     try:
         import akshare as ak
+    except ImportError:
+        raise ServiceUnavailableError("AKShare 未安装，请运行: pip install akshare")
+    
+    try:
         symbol = f"sh{code}" if code.startswith("6") else f"sz{code}"
         df = ak.stock_history_dividend_detail(symbol=symbol, indicator="分红")
-        items = []
-        for _, row in df.head(limit).iterrows():
-            try:
-                report_date = datetime.strptime(str(row.get("公告日期", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                continue
-            ex_date = None
-            try:
-                ex_date = datetime.strptime(str(row.get("除权除息日", ""))[:10], "%Y-%m-%d").date()
-            except (ValueError, TypeError):
-                pass
-            items.append(DividendItem(
-                report_date=report_date,
-                dividend_per_share=row.get("派息(税前)(元)"),
-                ex_date=ex_date,
-            ))
-        logger.info(f"Fetched {len(items)} dividend records for {code}")
-        return items if items else _get_mock_dividend(code, limit)
-    except ImportError:
-        logger.warning("AKShare not installed, using mock data")
-        return _get_mock_dividend(code, limit)
     except Exception as e:
-        logger.error(f"Error fetching dividend for {code}: {e}")
-        return _get_mock_dividend(code, limit)
+        logger.error(f"Failed to fetch dividend for {code}: {e}")
+        raise DataFetchError(f"获取分红数据失败 ({code}): {e}")
+    
+    items = []
+    for _, row in df.head(limit).iterrows():
+        try:
+            report_date = datetime.strptime(str(row.get("公告日期", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        ex_date = None
+        try:
+            ex_date = datetime.strptime(str(row.get("除权除息日", ""))[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            pass
+        items.append(DividendItem(
+            report_date=report_date,
+            dividend_per_share=row.get("派息(税前)(元)"),
+            ex_date=ex_date,
+        ))
+    
+    if not items:
+        raise DataParseError(f"分红数据解析失败 ({code}): 无有效记录")
+    
+    logger.info(f"Fetched {len(items)} dividend records for {code}")
+    return items
 ```
 
-**Step 2: 验证语法**
+**Step 3: 验证语法**
 
 Run: `cd backend && ./venv/bin/python -c "from app.services.data_service import *; print('OK')"`
 Expected: OK
