@@ -100,7 +100,42 @@ choco install python311 nodejs postgresql14 redis-64
 # Redis: https://github.com/microsoftarchive/redis/releases
 ```
 
-### 数据库初始化
+### 方式一：Docker 启动（推荐）
+
+使用 Docker Compose 可以快速启动所有依赖服务：
+
+```bash
+# 启动 PostgreSQL 和 Redis
+docker-compose -f docker-compose.dev.yml up -d
+
+# 查看服务状态
+docker-compose -f docker-compose.dev.yml ps
+
+# 查看日志
+docker-compose -f docker-compose.dev.yml logs -f
+
+# 停止服务
+docker-compose -f docker-compose.dev.yml down
+
+# 停止并删除数据卷（清空数据）
+docker-compose -f docker-compose.dev.yml down -v
+```
+
+**Docker 服务配置**:
+| 服务       | 端口 | 用户名   | 密码     | 数据库    |
+| ---------- | ---- | -------- | -------- | --------- |
+| PostgreSQL | 5432 | postgres | postgres | easyquant |
+| Redis      | 6379 | -        | -        | -         |
+
+**后端 .env 配置（Docker 模式）**:
+```bash
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/easyquant
+REDIS_URL=redis://localhost:6379/0
+```
+
+### 方式二：手动安装数据库
+
+如果不使用 Docker，可以手动安装 PostgreSQL：
 
 ```bash
 # 创建数据库用户和数据库
