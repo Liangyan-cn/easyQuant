@@ -6,10 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.config import settings
 from app.core.database import engine, AsyncSessionLocal
+from app.core.env_validator import startup_validation
 from app.models import Base
 from app.services.factor_service import init_builtin_factors
 from app.services.stock_pool_init import init_system_pools
 from app.services.strategy_service import init_builtin_strategies
+
+startup_validation(verbose=settings.DEBUG)
 
 
 @asynccontextmanager
