@@ -2,6 +2,9 @@ import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+import pandas as pd
+
+from app.services.cache_service import CacheService
 from app.schemas.stock import (
     BalanceSheetItem,
     BalanceSheetResponse,
@@ -153,6 +156,28 @@ def get_stock_history(
         cache_time, cached_response = _history_cache[cache_key]
         if _is_cache_valid(cache_time):
             return cached_response
+    
+    cache = CacheService()
+    cached_df = cache.get_ohlcv(code, start, end)
+    
+    if cached_df is not None and not cached_df.empty:
+        items = [
+            OHLCVItem(
+                date=row["date"].isoformat() if hasattr(row["date"], "isoformat") else str(row["date"]),
+                open=float(row["open"]),
+                high=float(row["high"]),
+                low=float(row["low"]),
+                close=float(row["close"]),
+                volume=int(row["volume"]),
+                amount=float(row["amount"]) if pd.notna(row.get("amount")) else None,
+                change_percent=float(row["change_percent"]) if pd.notna(row.get("change_percent")) else None,
+            )
+            for _, row in cached_df.iterrows()
+        ]
+        response = StockHistoryResponse(code=code, period=period, items=items)
+        _history_cache[cache_key] = (datetime.now(), response)
+        logger.info(f"Cache hit for {code} from {start} to {end}")
+        return response
     
     items = _fetch_history_from_akshare(code, period, start, end)
     
