@@ -237,8 +237,9 @@ const StockDetail: React.FC = () => {
           {stockData?.items?.length ? (
             <ReactECharts option={chartOption} style={{ height: 500 }} />
           ) : (
-            <div style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              暂无数据
+            <div style={{ height: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+              <div style={{ fontSize: 16, marginBottom: 8 }}>暂无数据</div>
+              <div style={{ fontSize: 12 }}>数据源可能暂时不可用，请稍后重试</div>
             </div>
           )}
         </Card>

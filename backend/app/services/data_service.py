@@ -240,7 +240,13 @@ def get_stock_history(
         logger.info(f"Cache hit for {code} from {start} to {end}")
         return response
     
-    items = _fetch_history_from_akshare(code, period, start, end)
+    try:
+        items = _fetch_history_from_akshare(code, period, start, end)
+    except RuntimeError as e:
+        if "Connection aborted" in str(e) or "Remote end closed" in str(e):
+            logger.warning(f"AKShare rate limited for {code}, returning empty data")
+            return StockHistoryResponse(code=code, period=period, items=[])
+        raise
     
     response = StockHistoryResponse(code=code, period=period, items=items)
     _history_cache[cache_key] = (datetime.now(), response)
