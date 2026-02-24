@@ -1,6 +1,5 @@
 import { Typography, Card, Row, Col, Tag } from 'antd';
 import {
-  LineChartOutlined,
   FundOutlined,
   RocketOutlined,
   ExperimentOutlined,
@@ -72,16 +71,9 @@ const Home: React.FC = () => {
     {
       icon: <ThunderboltOutlined />,
       title: '策略管理',
-      description: '编写交易策略，使用内置策略或自定义策略。',
+      description: '编写交易策略，运行回测验证策略效果。',
       path: '/strategies',
       color: '#52c41a',
-    },
-    {
-      icon: <LineChartOutlined />,
-      title: '策略回测',
-      description: '基于历史数据验证您的交易策略，优化参数配置。',
-      path: '/strategies',
-      color: '#faad14',
     },
     {
       icon: <FundOutlined />,
