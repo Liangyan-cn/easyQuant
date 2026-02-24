@@ -123,6 +123,15 @@ async def run_deployment(
     return await service.run_deployment(deployment_id, run_date)
 
 
+@router.post("/deployments/{deployment_id}/start", response_model=SandboxDeploymentResponse)
+async def start_deployment(
+    deployment_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.start_deployment(deployment_id)
+
+
 @router.post("/deployments/{deployment_id}/stop", response_model=SandboxDeploymentResponse)
 async def stop_deployment(
     deployment_id: int,

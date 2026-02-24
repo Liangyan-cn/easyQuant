@@ -47,3 +47,11 @@ async def get_current_user(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     return await auth_service.get_current_user(credentials.credentials)
+
+
+@router.post("/logout")
+async def logout(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return await auth_service.logout(credentials.credentials)

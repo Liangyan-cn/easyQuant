@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import date, datetime, timedelta
 from functools import lru_cache
@@ -9,6 +10,8 @@ from app.schemas.stock import (
     StockInfo,
     StockListResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 _stock_list_cache: Optional[list[StockInfo]] = None
 _stock_list_cache_time: Optional[datetime] = None
@@ -91,8 +94,16 @@ def _fetch_stock_list_from_akshare() -> list[StockInfo]:
                 market=market,
                 industry=None,
             ))
+        logger.info(f"Fetched {len(stocks)} stocks from AKShare")
         return stocks
-    except Exception:
+    except ImportError:
+        logger.warning("AKShare not installed, using mock data")
+        return _get_mock_stock_list()
+    except (KeyError, ValueError, TypeError) as e:
+        logger.error(f"Error parsing AKShare data: {e}")
+        return _get_mock_stock_list()
+    except Exception as e:
+        logger.error(f"Unexpected error fetching stock list: {e}")
         return _get_mock_stock_list()
 
 
@@ -127,8 +138,16 @@ def _fetch_history_from_akshare(
                 volume=float(row["成交量"]),
                 amount=float(row["成交额"]),
             ))
+        logger.debug(f"Fetched {len(items)} history records for {code}")
         return items
-    except Exception:
+    except ImportError:
+        logger.warning("AKShare not installed, using mock history data")
+        return _get_mock_history(code, period, start, end)
+    except (KeyError, ValueError, TypeError) as e:
+        logger.error(f"Error parsing history data for {code}: {e}")
+        return _get_mock_history(code, period, start, end)
+    except Exception as e:
+        logger.error(f"Unexpected error fetching history for {code}: {e}")
         return _get_mock_history(code, period, start, end)
 
 

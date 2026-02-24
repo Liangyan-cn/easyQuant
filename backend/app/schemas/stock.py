@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date as DateType
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -19,7 +19,7 @@ class StockListResponse(BaseModel):
 
 
 class OHLCVItem(BaseModel):
-    date: date = Field(..., description="日期")
+    date: DateType = Field(..., description="日期")
     open: float = Field(..., description="开盘价")
     high: float = Field(..., description="最高价")
     low: float = Field(..., description="最低价")
