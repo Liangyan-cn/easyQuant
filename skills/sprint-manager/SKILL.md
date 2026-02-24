@@ -170,25 +170,41 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
       ```
     - **询问用户**: 是否将未登记的变更补充到交付物列表中。
     - **自动修正**: 如果用户确认，更新 `kanban.md` 中的交付物列表。
-3.  **文档刷新 (Doc Refresh)**:
-    - **README.md**: 检查并更新 `项目状态` 和 `里程碑进度`。
-    - **System Design**: 检查架构图是否需要反映本 Sprint 的变更。
-    - **Index Check**: 确保新产出的报告已在相关文档中建立索引。
-    - **路径一致性**: 确保 `kanban.md` 中引用的文件路径与实际路径一致。
-    - **核心文档过时检查** ⭐:
-      - 参照 `kanban.md` 中的 `📚 核心文档索引` 章节
-      - 逐一检查核心文档是否与当前代码/功能一致
-      - 生成过时文档报告：
-        ```markdown
-        ## 📄 核心文档过时检查
-        
-        | 文档       | 路径                        | 状态       | 说明                     |
-        | ---------- | --------------------------- | ---------- | ------------------------ |
-        | 技术架构   | `docs/tech/architecture.md` | ⚠️ 需更新  | 新增因子模块未体现       |
-        | API 参考   | `docs/api-reference.md`     | ⚠️ 需更新  | 缺少新增的 /factors 端点 |
-        | 数据模型   | `docs/tech/data_model.md`   | ✅ 最新    | -                        |
-        ```
-      - **如有过时文档**: 自动在下一 Sprint 的 Backlog 中添加文档更新任务
+3.  **🔒 核心文档检查 (Doc Review) - 必执行** ⭐⭐:
+    > ⚠️ **强制检查点**: 此步骤为 Sprint 结束的**必执行步骤**，不可跳过。
+    
+    **检查流程**:
+    - 读取 `kanban.md` 中的 `📚 核心文档索引` 章节
+    - **逐一读取**每个核心文档，对比本 Sprint 的交付物
+    - 评估文档是否需要更新（新增功能是否已体现、API 是否完整等）
+    
+    **必须检查的文档类别**:
+    | 类别 | 检查重点 |
+    | ---- | -------- |
+    | 产品文档 | backlog.md 状态是否同步、milestones.md 进度是否更新 |
+    | 技术文档 | architecture.md 是否反映新模块、api-reference.md 是否包含新端点 |
+    | 项目文档 | README.md 项目状态是否更新 |
+    
+    **生成检查报告** (必须输出):
+    ```markdown
+    ## 📄 核心文档检查报告
+    
+    ### 检查结果
+    | 文档       | 路径                        | 状态       | 说明                     |
+    | ---------- | --------------------------- | ---------- | ------------------------ |
+    | 技术架构   | `docs/tech/architecture.md` | ⚠️ 需更新  | 新增因子模块未体现       |
+    | API 参考   | `docs/api-reference.md`     | ⚠️ 需更新  | 缺少新增的 /factors 端点 |
+    | 数据模型   | `docs/tech/data_model.md`   | ✅ 最新    | -                        |
+    | 产品待办   | `docs/product/backlog.md`   | ⚠️ 需更新  | Sprint 完成状态未同步    |
+    
+    ### 📝 文档更新任务 (自动添加到 Backlog)
+    - [ ] 更新 api-reference.md: 添加 /factors 端点文档
+    - [ ] 更新 backlog.md: 同步 Sprint 12 完成状态
+    ```
+    
+    **后续动作**:
+    - **如有需更新的文档**: 自动在 `kanban.md` 的 Backlog 中添加 `TASK-DOC: 文档更新` 任务
+    - **检查报告必须包含在 Sprint Summary 中**
 4.  **归档 (Archive)**:
     - 创建 Sprint Summary 文档。
     - 将 `kanban.md` 中的详细任务移动到 Summary。
