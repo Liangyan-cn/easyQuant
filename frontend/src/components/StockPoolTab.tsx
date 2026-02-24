@@ -34,6 +34,7 @@ import type {
   StockPoolItem,
 } from '@/types/stockPool';
 import { POOL_TYPE_LABELS } from '@/types/stockPool';
+import StockSelector, { type StockOption } from './StockSelector';
 
 const StockPoolTab: React.FC = () => {
   const navigate = useNavigate();
@@ -52,8 +53,8 @@ const StockPoolTab: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedPool, setSelectedPool] = useState<StockPoolDetail | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
-  const [addStockForm] = Form.useForm();
   const [stockSearchKeyword, setStockSearchKeyword] = useState('');
+  const [selectedStock, setSelectedStock] = useState<StockOption | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -155,16 +156,18 @@ const StockPoolTab: React.FC = () => {
   };
 
   const handleAddStock = async () => {
-    if (!selectedPool) return;
+    if (!selectedPool || !selectedStock) {
+      message.warning('请先选择股票');
+      return;
+    }
     try {
-      const values = await addStockForm.validateFields();
       const data: StockPoolItemCreate = {
-        stock_code: values.stock_code,
-        stock_name: values.stock_name,
+        stock_code: selectedStock.code,
+        stock_name: selectedStock.name,
       };
       await stockPoolApi.addStock(selectedPool.id, data);
       message.success('添加成功');
-      addStockForm.resetFields();
+      setSelectedStock(null);
       const response = await stockPoolApi.getPool(selectedPool.id);
       setSelectedPool(response.data);
       fetchPools();
@@ -349,27 +352,21 @@ const StockPoolTab: React.FC = () => {
             </div>
 
             {selectedPool.pool_type === 'user' && (
-              <Form
-                form={addStockForm}
-                layout="inline"
-                style={{ marginBottom: 16 }}
-                onFinish={handleAddStock}
-              >
-                <Form.Item
-                  name="stock_code"
-                  rules={[{ required: true, message: '请输入股票代码' }]}
+              <Space style={{ marginBottom: 16, width: '100%' }}>
+                <StockSelector
+                  style={{ width: 280 }}
+                  value={selectedStock?.code}
+                  onStockSelect={setSelectedStock}
+                />
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddStock}
+                  disabled={!selectedStock}
                 >
-                  <Input placeholder="股票代码" style={{ width: 120 }} />
-                </Form.Item>
-                <Form.Item name="stock_name">
-                  <Input placeholder="股票名称(可选)" style={{ width: 120 }} />
-                </Form.Item>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
-                    添加
-                  </Button>
-                </Form.Item>
-              </Form>
+                  添加
+                </Button>
+              </Space>
             )}
 
             <Input.Search
