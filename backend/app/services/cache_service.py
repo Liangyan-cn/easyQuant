@@ -121,3 +121,32 @@ class CacheService:
 
     def clear_memory_cache(self):
         self._memory_cache.clear()
+
+    def _get_all_ohlcv_stocks(self) -> Optional[list]:
+        file_path = CACHE_DIR / "ohlcv.parquet"
+        if file_path.exists():
+            df = pd.read_parquet(file_path, columns=["stock_code"])
+            return df["stock_code"].unique().tolist()
+        return None
+
+    def append_ohlcv(self, stock_code: str, df: pd.DataFrame):
+        df = df.copy()
+        df["stock_code"] = stock_code
+
+        file_path = CACHE_DIR / "ohlcv.parquet"
+        if file_path.exists():
+            existing = pd.read_parquet(file_path)
+            existing_stock = existing[existing["stock_code"] == stock_code]
+            if not existing_stock.empty:
+                existing_dates = set(pd.to_datetime(existing_stock["date"]).dt.date)
+                df["date"] = pd.to_datetime(df["date"]).dt.date
+                df = df[~df["date"].isin(existing_dates)]
+
+            if not df.empty:
+                df = pd.concat([existing, df], ignore_index=True)
+            else:
+                return
+        
+        df.to_parquet(file_path, index=False)
+        self._memory_cache.pop(f"ohlcv_{stock_code}", None)
+        self._update_ohlcv_metadata()
