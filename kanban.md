@@ -16,21 +16,28 @@
 
 ### 任务列表
 
-#### TASK-1: 股票池管理 (P0)
+#### TASK-1: 股票池管理 (P0) ✅
 
 **说明**: 实现股票池的数据模型和 CRUD API，支持用户创建自定义股票池，系统预置沪深300和中证500
 
 **依赖**: 无
 
 **子任务**:
-- [ ] 设计 StockPool 和 StockPoolItem 数据库模型
-- [ ] 实现股票池 CRUD API (创建/读取/更新/删除)
-- [ ] 实现股票池成员管理 API (添加/删除股票)
-- [ ] 实现从指数导入成分股功能 (沪深300/中证500)
-- [ ] 初始化系统预置股票池 (沪深300、中证500)
+- [x] 设计 StockPool 和 StockPoolItem 数据库模型
+- [x] 实现股票池 CRUD API (创建/读取/更新/删除)
+- [x] 实现股票池成员管理 API (添加/删除股票)
+- [x] 实现从指数导入成分股功能 (沪深300/中证500)
+- [x] 初始化系统预置股票池 (沪深300、中证500)
 - [ ] 前端股票池管理页面
 
-**交付产物**: {任务完成后补充}
+**交付产物**:
+- `backend/app/models/stock_pool.py` - StockPool, StockPoolItem 数据模型
+- `backend/app/schemas/stock_pool.py` - Pydantic Schema
+- `backend/app/repositories/stock_pool_repo.py` - Repository 层
+- `backend/app/services/stock_pool_service.py` - Service 层
+- `backend/app/api/v1/endpoints/stock_pool.py` - 8 个 API 端点
+- `backend/app/services/stock_pool_init.py` - 系统池初始化脚本
+- `backend/tests/test_stock_pool.py` - 9 个测试用例 (100% 通过)
 
 #### TASK-2: 数据缓存方案 (P1)
 
@@ -297,7 +304,14 @@
 | API 参考   | `docs/api-reference.md`         | API 接口文档         |
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
-| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     || 文档       | 路径                           |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |  | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |
