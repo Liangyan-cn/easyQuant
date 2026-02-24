@@ -34,74 +34,166 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
     - 读取 `docs/product/milestones.md` (长期目标)。
     - 读取 `docs/product/backlog.md` (任务池)。
 2.  **计划 (Plan)**:
-    - 向用户总结历史。
-    - 询问 **目标 (Goal)** 和 **周期 (Duration)**。
-    - 建议 Backlog 任务 (移动，不要复制)。
+    - 向用户总结历史 Sprint 完成情况。
+    - 确认 **目标 (Goal)** 和 **里程碑 (Milestone)**。
+    - 列出任务列表和复杂度分布。
 3.  **执行 (Execute)**:
-    - 在 `kanban.md` 中，在 `## 🏃 当前 Sprint` 章节下添加新 Sprint 信息。
+    - 在 `kanban.md` 中，更新 `## 🏃 当前 Sprint` 章节。
+    - 将状态从 "待启动" 改为 "🔄 进行中"。
     - 确保 `Current Sprint` 始终位于 `Backlog` 之上。
     - 插入 **强制任务**:
-        - `[ ] 里程碑对齐与方向校准 (Milestone Alignment & Direction Check)`
-        - `[ ] Sprint 启动检查 (Sprint Initialization Checklist)`
+        - `[x] 里程碑对齐与方向校准`
+        - `[x] Sprint 启动检查`
+        - `[ ] 团队任务分配确认`
+
+> ⚠️ **AI Coding 优化**: 不询问 Sprint 周期/时长，AI 按任务执行，不按日历时间。
 
 ### 🟡 Sprint 健康度检查 (Sprint Health Check)
-**触发条件**: Sprint 进行到 50% 时间点，或用户主动请求。
+**触发条件**: 用户主动请求 "健康检查"、"进度检查"、"Sprint 状态"。
 **工作流**:
 1.  **进度检查 (Progress Check)**:
     - 统计任务完成率：`完成数 / 总任务数`
-    - 对比预期进度：`当前进度 vs 时间进度`
-    - 生成 Burndown 趋势：
+    - 按复杂度统计：🟢低/🟡中/🔴高 各完成多少
+    - 生成进度报告：
       ```markdown
-      ## 📊 Sprint Burndown
+      ## 📊 Sprint 进度报告
       
-      | 日期  | 剩余任务 | 预期剩余 | 状态              |
-      | ----- | -------- | -------- | ----------------- |
-      | Day 1 | 10       | 10       | ✅ On Track        |
-      | Day 3 | 8        | 7        | ⚠️ Slightly Behind |
-      | Day 5 | 7        | 4        | 🔴 Behind Schedule |
+      | 任务组 | 总数 | 完成 | 进行中 | 待开始 |
+      | ------ | ---- | ---- | ------ | ------ |
+      | TASK-1 | 4    | 2    | 1      | 1      |
+      | TASK-2 | 4    | 0    | 0      | 4      |
       ```
 2.  **风险识别 (Risk Identification)**:
-    - **Blocker**: 标记为 `[/]` 但超过 2 天未完成的任务
-    - **延期风险**: 剩余时间 < 剩余任务 * 平均完成时间
+    - **Blocker**: 标记为 🔄 但长时间未完成的任务
     - **依赖阻塞**: 任务 B 依赖任务 A，但 A 未完成
+    - **高复杂度任务**: 🔴 高复杂度任务是否有进展
 3.  **调整建议 (Adjustment Recommendations)**:
-    - **加速**: 如果进度落后，建议砍掉 P2 任务
-    - **延期**: 如果有 Blocker，建议延期 Sprint
-    - **增援**: 如果任务过多，建议增加人力或拆分任务
+    - **优先级调整**: 如果 P0 任务阻塞，建议先解决
+    - **任务拆分**: 如果任务过大，建议拆分
+    - **砍需求**: 如果 P2 任务影响核心目标，建议延期
 4.  **输出报告**:
     ```markdown
     ## 🏥 Sprint Health Check Report
     
     ### 当前状态
-    - **完成率**: 40% (4/10 tasks)
-    - **时间进度**: 50% (Day 5/10)
-    - **健康度**: 🔴 Behind Schedule
+    - **完成率**: 40% (8/20 tasks)
+    - **复杂度进度**: 🟢 6/12 | 🟡 2/7 | 🔴 0/1
+    - **健康度**: 🟡 正常进行
     
     ### 风险清单
-    1. **Blocker**: Task #3 (API 集成) - 等待第三方响应
-    2. **延期风险**: 剩余 6 个任务，只剩 5 天
+    1. **高复杂度任务**: TASK-2 (因子计算引擎) 尚未开始
+    2. **依赖阻塞**: TASK-3 依赖 TASK-2，需先完成
     
     ### 调整建议
-    - 🔴 **立即行动**: 联系第三方加速 API 集成
-    - 🟡 **考虑砍需求**: Task #8 (P2) 可以延期到下个 Sprint
-    - 🟢 **保持现状**: 其他任务进展正常
+    - 🔴 **立即行动**: 优先完成 TASK-2.1
+    - 🟡 **关注**: TASK-2 是关键路径，需重点投入
+    - 🟢 **保持**: 其他任务进展正常
     ```
 
+### 🔵 任务管理 (Task Management)
+**触发条件**: "创建任务", "添加任务", "更新任务", "任务完成".
+**工作流**:
+
+#### 创建任务
+1.  **收集信息**:
+    - 任务标题和优先级 (P0/P1/P2)
+    - 任务说明 (做什么、为什么)
+    - 依赖关系 (可选)
+2.  **生成任务卡片**:
+    - 使用 `templates/task_template.md` 中的模板格式
+    - 自动分配 TASK-N 编号
+    - **交付产物可以留空**，标记为 `{任务完成后补充}`
+3.  **更新 kanban.md**:
+    - 在当前 Sprint 的任务列表中添加新任务
+
+#### 任务完成
+1.  **补充交付产物**:
+    - 收集任务执行过程中产生的所有产出
+    - 更新任务卡片中的交付产物表格
+    - 包括计划内和计划外的有价值产出
+2.  **更新状态**:
+    - 将任务状态从 `[ ]` 改为 `[x]`
+    - 将子任务状态全部标记为完成
+3.  **完成度检测** ⭐:
+    - 检查当前 Sprint 所有任务是否已完成
+    - 如果 **所有任务都已完成**，主动提醒用户：
+      ```
+      🎉 Sprint 所有任务已完成！
+      
+      建议执行以下操作：
+      1. 运行 `git status` 检查未提交的代码
+      2. 提交所有代码变更
+      3. 执行 "结束 Sprint" 完成归档
+      
+      是否现在结束 Sprint？
+      ```
+
+> ⚠️ **交付产物后补原则**
+> - 任务创建时，交付产物可以不明确
+> - 任务执行结束后，**必须补充**实际交付产物
+> - 这样做的好处：
+>   - 探索性任务的产出在执行前难以预测
+>   - 避免过度设计，保持敏捷
+>   - 记录实际产出，而非预期产出
+
 ### 🔴 Sprint 结束 (Sprint Closing)
-**触发条件**: "End Sprint", "Close Sprint", "Sprint Retrospective".
+**触发条件**: "End Sprint", "Close Sprint", "Sprint Retrospective", 或所有任务完成后用户确认结束.
 **工作流**:
 1.  **验证 (Verify)**:
     - 确保 `kanban.md` 中所有任务均已完成或标记。
     - 如果存在未完成任务，询问用户是延期还是完成。
-2.  **文档刷新 (Doc Refresh)**:
+    - **代码提交检查** ⭐: 运行 `git status`，如果存在未提交的代码变更：
+      - 列出所有未提交的文件
+      - **强烈建议用户先提交代码**，再继续 Sprint 结束流程
+      - 提供分批提交建议（按功能模块）
+2.  **未登记任务检查 (Unregistered Work Check)** ⭐:
+    - 运行 `git status --porcelain` 获取所有本地变更。
+    - 对比 `kanban.md` 中已登记的交付物，识别未登记的工作：
+        - **新增文件 (`??`)**: 检查是否为 Sprint 期间的产出但未登记
+        - **修改文件 (`M`)**: 检查是否为计划外的优化或修复
+        - **删除文件 (`D`)**: 检查是否为清理工作但未登记
+    - 生成对比报告：
+      ```markdown
+      ## 📋 未登记任务检查
+      
+      ### ✅ 已登记的交付物
+      | 文件             | 登记状态 | Git 状态     |
+      | ---------------- | -------- | ------------ |
+      | `demo.py`        | ✅ 已登记 | ✅ 匹配       |
+      | `docs/report.md` | ✅ 已登记 | ⚠️ 路径不一致 |
+      
+      ### ❌ 未登记的变更
+      | 文件/目录           | 类型   | 建议         |
+      | ------------------- | ------ | ------------ |
+      | `scripts/helper.sh` | 🆕 新增 | **补充登记** |
+      | `config.yaml`       | 📝 修改 | **补充登记** |
+      ```
+    - **询问用户**: 是否将未登记的变更补充到交付物列表中。
+    - **自动修正**: 如果用户确认，更新 `kanban.md` 中的交付物列表。
+3.  **文档刷新 (Doc Refresh)**:
     - **README.md**: 检查并更新 `项目状态` 和 `里程碑进度`。
     - **System Design**: 检查架构图是否需要反映本 Sprint 的变更。
     - **Index Check**: 确保新产出的报告已在相关文档中建立索引。
-3.  **归档 (Archive)**:
+    - **路径一致性**: 确保 `kanban.md` 中引用的文件路径与实际路径一致。
+    - **核心文档过时检查** ⭐:
+      - 参照 `kanban.md` 中的 `📚 核心文档索引` 章节
+      - 逐一检查核心文档是否与当前代码/功能一致
+      - 生成过时文档报告：
+        ```markdown
+        ## 📄 核心文档过时检查
+        
+        | 文档       | 路径                        | 状态       | 说明                     |
+        | ---------- | --------------------------- | ---------- | ------------------------ |
+        | 技术架构   | `docs/tech/architecture.md` | ⚠️ 需更新  | 新增因子模块未体现       |
+        | API 参考   | `docs/api-reference.md`     | ⚠️ 需更新  | 缺少新增的 /factors 端点 |
+        | 数据模型   | `docs/tech/data_model.md`   | ✅ 最新    | -                        |
+        ```
+      - **如有过时文档**: 自动在下一 Sprint 的 Backlog 中添加文档更新任务
+4.  **归档 (Archive)**:
     - 创建 Sprint Summary 文档。
     - 将 `kanban.md` 中的详细任务移动到 Summary。
     - Summary 必须包含: `用户故事演示 (User Story Demo)`, `关键缺陷 (Critical Bugs)`, `效率复盘 (Efficiency)`.
-3.  **Git 提交检查 (Git Check)**:
+5.  **Git 提交检查 (Git Check)**:
     - 运行 `git status` 和 `git diff` 评估变更。
     - 检查是否存在不合规的新增文件 (如 `.trae/`, `data/eval/failed.json`)。
     - 如果发现，更新 `.gitignore`。
@@ -109,7 +201,7 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
         - 分析变更文件类型，生成符合 Conventional Commits 规范的多条提交建议。
         - 优先建议拆分提交 (e.g., `feat: ...`, `docs: ...`, `chore: ...`) 而不是单一的 `git add .`。
     - **仅在控制台显示 (Console Warning Only)**: 提交建议仅作为 Console Warning 显示，**不要**包含在 Summary 文件中。
-4.  **清理 (Clean Up)**:
+6.  **清理 (Clean Up)**:
     - 更新 `kanban.md` 中 Sprint 状态为已完成。
     - 只保留 **关键交付物** 和 **完工验收 (Definition of Done)**。
     - 将未完成事项回退到 Backlog。
@@ -126,17 +218,109 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 
 **Sprint ID**: Sprint N
 **标题**: <Title>
-**周期**: YYYY-MM-DD ~ YYYY-MM-DD
-**目标**: ...
+**状态**: 🔄 进行中
 **里程碑**: Mx - <Milestone Name>
+**目标**: ...
+**启动日期**: YYYY-MM-DD
 
 ### 任务列表
-
-#### TASK-ID: Task Title
-**优先级**: P0/P1/P2
-**预计工时**: Xh
-**描述**: ...
+(按 Task Card Format 格式描述任务)
 ```
+
+### Task Card Format (任务卡片格式)
+
+> 📄 **详细模板**: 参见 `templates/task_template.md`
+
+#### 基础模板 (任务创建时)
+```markdown
+#### TASK-{N}: {任务标题} ({优先级})
+
+**说明**: {任务描述，说明要做什么、为什么要做}
+
+**依赖**: {依赖的前置任务，如 TASK-1, TASK-2；无依赖则填"无"}
+
+**子任务**:
+- [ ] {子任务 1}
+- [ ] {子任务 2}
+- [ ] {子任务 3}
+
+**交付产物**: {任务完成后补充}
+```
+
+#### 完整模板 (任务完成后)
+```markdown
+#### TASK-{N}: {任务标题} ({优先级})
+
+**说明**: {任务描述，说明要做什么、为什么要做}
+
+**依赖**: {依赖的前置任务}
+
+**子任务**:
+- [x] {子任务 1} ✅
+- [x] {子任务 2} ✅
+- [x] {子任务 3} ✅
+
+**交付产物**:
+| 产物       | 路径             | 说明       |
+| ---------- | ---------------- | ---------- |
+| {产物名称} | `{path/to/file}` | {简要说明} |
+```
+
+#### 格式说明
+| 元素       | 格式                                    | 示例                       |
+| ---------- | --------------------------------------- | -------------------------- |
+| **任务ID** | `TASK-{N}`                              | `TASK-1`, `TASK-2`         |
+| **优先级** | `(P0/P1/P2)`                            | `(P0)` 最高优先级          |
+| **依赖**   | `TASK-{N}` 或 `无`                      | `TASK-1, TASK-2` 或 `无`   |
+| **复杂度** | `` `🟢低` `` / `` `🟡中` `` / `` `🔴高` `` | `` `🟡中` `` (可选)         |
+| **状态**   | `[ ]` / `[x]`                           | `[ ]` 待开始, `[x]` 已完成 |
+
+#### 完整示例
+
+**创建时 (交付产物待定)**:
+```markdown
+#### TASK-1: 因子数据模型与 API (P0)
+
+**说明**: 实现因子的数据库模型和 CRUD API，支持因子的增删改查操作
+
+**依赖**: 无
+
+**子任务**:
+- [ ] 设计 Factor 数据库模型
+- [ ] 设计 FactorValue 数据库模型
+- [ ] 实现因子 CRUD API
+- [ ] 实现因子分类 API
+
+**交付产物**: {任务完成后补充}
+```
+
+**完成后 (补充交付产物)**:
+```markdown
+#### TASK-1: 因子数据模型与 API (P0) ✅
+
+**说明**: 实现因子的数据库模型和 CRUD API，支持因子的增删改查操作
+
+**依赖**: 无
+
+**子任务**:
+- [x] 设计 Factor 数据库模型 ✅
+- [x] 设计 FactorValue 数据库模型 ✅
+- [x] 实现因子 CRUD API ✅
+- [x] 实现因子分类 API ✅
+
+**交付产物**:
+| 产物     | 路径                                     | 说明                     |
+| -------- | ---------------------------------------- | ------------------------ |
+| 数据模型 | `backend/app/models/factor.py`           | Factor, FactorValue 模型 |
+| API 端点 | `backend/app/api/v1/endpoints/factor.py` | 因子 CRUD API            |
+| Schema   | `backend/app/schemas/factor.py`          | Pydantic 模式            |
+```
+
+> ⚠️ **AI Coding 优化说明**
+> - **记录客观日期**: 启动日期、完成日期作为历史留档
+> - **不估算时长**: 不预估 Sprint 周期或工时，使用复杂度 (🟢/🟡/🔴) 代替
+> - **不设置健康检查日期**: 用户可随时请求健康检查
+> - **交付产物后补**: 任务创建时交付产物可以不明确，**任务完成后必须补充**
 
 ### Sprint Summary File
 ```markdown
@@ -145,7 +329,9 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 ## 🎯 Goal & Status
 *   **Goal**: ...
 *   **Status**: Completed
-*   **Duration**: ...
+*   **里程碑**: Mx
+*   **启动日期**: YYYY-MM-DD
+*   **完成日期**: YYYY-MM-DD
 
 ## 🎬 User Story Demo Scenarios
 *   **Input**: ...
@@ -154,19 +340,16 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 ## 🐛 Critical Bugs & Retrospective
 *   ...
 
-## 📈 Efficiency & Process
-*   ...
-
 ## 📋 Task Detail Archive
 *   (Moved from kanban.md)
 ```
 
 ### Completed Sprint Block (kanban.md)
 ```markdown
-### ✅ Sprint N: <Title> (Completed)
-**周期**: ...
+### ✅ Sprint N: <Title> (已完成)
+**里程碑**: Mx
 **目标**: ...
-**里程碑**: ...
+**执行日期**: YYYY-MM-DD ~ YYYY-MM-DD
 
 **关键交付物**:
 - ✅ Category: Item...
@@ -178,7 +361,7 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 ## 5. File Structure Constraints
 <constraints>
 1.  **kanban.md Structure**:
-    - **Header**: `# Sprint.AI 项目看板` + 项目信息
+    - **Header**: `# easyQuant 项目看板` + 项目信息
     - **Current Sprint**: `## 🏃 当前 Sprint` (Only one allowed)
     - **Backlog**: `## 📦 Backlog`
     - **Milestones**: `## 🎯 里程碑 (Milestones)`

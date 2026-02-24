@@ -35,6 +35,12 @@
     *   **包含章节**: 数据统计, 评审清单, 复盘, 任务归档
     *   **预计填写时间**: 45-60 分钟
 
+*   **[task_template.md](task_template.md)**: 任务卡片模板 ⭐ NEW
+    *   **适用场景**: 创建和管理 Sprint 任务
+    *   **包含章节**: 任务说明, 依赖关系, 子任务, 交付产物
+    *   **预计填写时间**: 5-15 分钟
+    *   **特点**: 交付产物可在任务完成后补充
+
 *   **[daily_standup.md](daily_standup.md)**: 每日站会模板
     *   **适用场景**: 每日进度同步
     *   **包含章节**: 进度概览, 成员更新, 阻塞项, 重点任务
@@ -99,6 +105,7 @@ cp skills/tech-design-generator/templates/tech_design.md docs/tech/feature_name_
 | **tech_design**     | ⭐⭐⭐⭐⭐  | 60-120min  | 所有功能    | 0,1,2,3  |
 | **sprint_planning** | ⭐⭐⭐    | 30-45min   | Sprint 启动 | 1,2,3    |
 | **sprint_summary**  | ⭐⭐⭐    | 45-60min   | Sprint 结束 | 1,2,3    |
+| **task_template**   | ⭐⭐      | 5-15min    | 任务管理    | 1,2      |
 | **research_report** | ⭐⭐⭐⭐   | 120-180min | 技术调研    | 1,2,3,6  |
 | **adr_template**    | ⭐⭐⭐    | 30-45min   | 重要决策    | 1,2,3,4  |
 

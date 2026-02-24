@@ -1,6 +1,6 @@
 ---
 name: "prd-generator"
-description: "生成标准化的 PRD (产品需求文档)。当用户想要定义新功能、撰写需求或写 PRD 时调用此 Skill。"
+description: "Use when starting a new feature WITHOUT existing design - generates standalone PRD document. After PRD, invoke tech-doc-generator for technical design."
 ---
 
 # PRD Generator
@@ -120,3 +120,17 @@ description: "生成标准化的 PRD (产品需求文档)。当用户想要定�
 2.  **具体性**: 避免使用"快"、"好"等模糊词汇。请使用数字（如"< 1s"）。
 3.  **上下文感知**: 在需求中引用具体的系统模块或功能领域。
 </constraints>
+
+## 6. After PRD Generation
+
+**REQUIRED NEXT STEP:** PRD 生成完成后，必须引导用户进入下一阶段：
+
+1. **如果需要技术设计** → 调用 `tech-doc-generator` 技能生成技术方案
+2. **如果需要探索讨论** → 调用 `brainstorming` 技能进行方案探索
+3. **如果 PRD 已足够详细** → 调用 `writing-plans` 技能编写实施计划
+
+**提示用户：**
+> PRD 已生成完成。下一步建议：
+> - 如需技术设计，请说 "生成技术方案"
+> - 如需方案讨论，请说 "开始头脑风暴"
+> - 如已准备好实施，请说 "编写实施计划"

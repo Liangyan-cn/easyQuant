@@ -53,19 +53,48 @@ easyQuant/
 
 ### 环境要求
 
-- Python 3.8+
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL 14+
 - Git
 
-### 初始化工作区
+### 后端启动
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd easyQuant
+cd backend
 
-# 初始化工作区（创建必要的目录和文件）
-python scripts/init_workspace.py
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate  # Windows
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，配置数据库连接等
+
+# 初始化数据库
+./venv/bin/alembic upgrade head
+
+# 启动开发服务器
+./venv/bin/uvicorn app.main:app --reload --port 8000
 ```
+
+### 前端启动
+
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+访问 http://localhost:3000 即可使用系统。
 
 ### 文档工具
 
@@ -79,6 +108,50 @@ python scripts/analyze_docs.py --report
 # 生成文档索引
 python scripts/generate_index.py
 ```
+
+## 🔧 运维脚本
+
+### 批量计算因子值
+
+当需要为所有因子预计算最近一年的数据时，可以使用批量计算脚本：
+
+```bash
+cd backend
+
+# 执行批量计算（已有数据的因子会自动跳过）
+./venv/bin/python scripts/batch_calculate_factors.py
+```
+
+**输出示例：**
+```
+批量计算因子值: 2025-02-24 ~ 2026-02-24
+============================================================
+
+[1] 动量因子 (20日) (momentum_20d)
+  ✅ 已有数据: 110,207 条
+
+[2] 动量因子 (60日) (momentum_60d)
+  🔄 开始计算...
+  ✅ 计算完成: 90,276 条数据
+
+[5] ROE (roe)
+  ⏭️  跳过: 暂不支持计算 (需要财务数据)
+
+============================================================
+批量计算完成!
+```
+
+**支持计算的因子类型：**
+- 动量因子 (momentum_20d, momentum_60d)
+- 波动率 (volatility_20d)
+- 换手率 (turnover_rate)
+- 市值对数 (log_market_cap)
+
+**暂不支持的因子（需要财务数据）：**
+- 市盈率倒数 (ep_ratio)
+- 市净率倒数 (bp_ratio)
+- ROE (roe)
+- 营收增长率 (revenue_growth)
 
 ## 🛠️ Agent Skills
 

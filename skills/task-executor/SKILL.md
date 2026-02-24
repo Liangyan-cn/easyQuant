@@ -1,6 +1,6 @@
 ---
 name: "task-skills"
-description: "辅助将高层需求拆解为标准化的执行步骤，并提供执行过程中的调研与验证指导。当用户需要规划新功能、重构代码或处理复杂问题时调用。"
+description: "Use for SIMPLE tasks that don't need full brainstorming - directly breaks down and executes. For complex features, use brainstorming instead."
 ---
 
 # Task Skills

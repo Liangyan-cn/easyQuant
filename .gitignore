@@ -41,8 +41,12 @@ ENV/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage/
 .tox/
 .nox/
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Jupyter
 .ipynb_checkpoints/
