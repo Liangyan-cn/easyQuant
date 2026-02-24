@@ -4,14 +4,93 @@
 
 **Sprint ID**: Sprint 8
 **标题**: M2.0 功能完整性修复
-**状态**: ⚪ 待启动
+**状态**: 🔄 进行中
 **里程碑**: M2.0 - 沙盒系统
-**目标**: 修复功能缺失和逻辑不完整的问题
-**计划日期**: 待定
+**目标**: 修复功能缺失和逻辑不完整的问题，确保核心功能闭环
+**启动日期**: 2026-02-24
 
-### 计划任务
+### 启动检查
+- [x] 里程碑对齐与方向校准
+- [x] Sprint 启动检查
+- [x] 任务分配确认
 
-从 Backlog 的 "功能完整性修复" 中选取 P0/P1 任务
+### 任务列表
+
+#### TASK-1: 用户登出与页面入口 (P0) ✅
+**说明**: 实现用户登出 API 和前端登出入口，确保用户可以安全退出系统
+
+**依赖**: 无
+
+**子任务**:
+- [x] 后端实现 `/auth/logout` API
+- [x] 前端 Header 添加用户下拉菜单
+- [x] 实现登出功能并清除本地存储
+
+**交付产物**:
+| 产物     | 路径                                   | 说明                |
+| -------- | -------------------------------------- | ------------------- |
+| 登出 API | `backend/app/api/v1/endpoints/auth.py` | POST /logout 端点   |
+| 登出服务 | `backend/app/services/auth_service.py` | logout 方法         |
+| 用户菜单 | `frontend/src/layouts/MainLayout.tsx`  | Header 用户下拉菜单 |
+
+---
+
+#### TASK-2: 沙盒部署状态管理 (P0) ✅
+**说明**: 完善部署状态转换，支持暂停后恢复运行
+
+**依赖**: 无
+
+**子任务**:
+- [x] 后端添加 `/deployments/{id}/start` API (恢复运行)
+- [x] 前端为 paused 状态添加"恢复"按钮
+- [x] 按钮状态逻辑：running 显示暂停，paused 显示恢复
+
+**交付产物**:
+| 产物     | 路径                                      | 说明                         |
+| -------- | ----------------------------------------- | ---------------------------- |
+| 启动 API | `backend/app/api/v1/endpoints/sandbox.py` | POST /deployments/{id}/start |
+| 前端 API | `frontend/src/api/sandbox.ts`             | startDeployment 方法         |
+| 页面更新 | `frontend/src/pages/SandboxDetail.tsx`    | 恢复按钮                     |
+
+---
+
+#### TASK-3: 策略复制功能 (P0) ✅
+**说明**: 实现策略克隆功能，允许用户基于现有策略（包括内置策略）创建新策略
+
+**依赖**: 无
+
+**子任务**:
+- [x] 后端实现 `/strategies/{id}/clone` API
+- [x] 前端策略列表添加"复制"按钮
+- [x] 复制成功后刷新列表
+
+**交付产物**:
+| 产物     | 路径                                       | 说明                        |
+| -------- | ------------------------------------------ | --------------------------- |
+| 克隆服务 | `backend/app/services/strategy_service.py` | clone_strategy 方法         |
+| 克隆 API | `backend/app/api/v1/endpoints/strategy.py` | POST /strategies/{id}/clone |
+| 前端 API | `frontend/src/api/strategy.ts`             | cloneStrategy 方法          |
+| 复制按钮 | `frontend/src/pages/Strategies.tsx`        | 操作列复制按钮              |
+
+---
+
+#### TASK-4: 回测功能增强 (P1) ✅
+**说明**: 增强回测功能，支持删除回测记录和显示权益曲线图表
+
+**依赖**: 无
+
+**子任务**:
+- [x] 前端添加回测删除按钮
+- [x] 实现回测权益曲线图表 (ECharts)
+- [x] 允许失败回测重新运行
+
+**交付产物**:
+| 产物          | 路径                                        | 说明                  |
+| ------------- | ------------------------------------------- | --------------------- |
+| 删除结果方法  | `backend/app/repositories/strategy_repo.py` | delete_by_backtest_id |
+| 重跑逻辑      | `backend/app/api/v1/endpoints/strategy.py`  | 允许 FAILED 状态重跑  |
+| 权益曲线图表  | `frontend/src/pages/StrategyDetail.tsx`     | ECharts 折线图        |
+| 删除/重跑按钮 | `frontend/src/pages/StrategyDetail.tsx`     | 操作列按钮            |
 
 ---
 
