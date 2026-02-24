@@ -19,8 +19,10 @@ import {
   DatePicker,
   InputNumber,
   Select,
+  Alert,
+  Tooltip,
 } from 'antd';
-import { ArrowLeftOutlined, PlayCircleOutlined, LineChartOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlayCircleOutlined, LineChartOutlined, DeleteOutlined, ReloadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import ReactECharts from 'echarts-for-react';
@@ -31,6 +33,17 @@ import { STRATEGY_TYPE_LABELS, STRATEGY_STATUS_LABELS, BACKTEST_STATUS_LABELS } 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
+const getStrategyTypeDescription = (type: string): string => {
+  const descriptions: Record<string, string> = {
+    momentum: '动量策略基于"强者恒强"的理念，买入近期涨幅较大的股票。适合趋势明显的市场，但在震荡市可能表现不佳。',
+    mean_reversion: '均值回归策略认为价格会向均值回归，在价格偏离均值时反向操作。适合震荡市，但在趋势市可能产生较大回撤。',
+    trend_following: '趋势跟踪策略顺势而为，在趋势形成时入场，趋势结束时离场。常用均线、突破等信号判断趋势。',
+    factor_based: '因子策略基于量化因子选股，如价值因子(PE/PB)、质量因子(ROE)等。通过因子打分选择股票组合。',
+    custom: '自定义策略，可根据自己的交易逻辑编写策略代码。',
+  };
+  return descriptions[type] || '暂无说明';
+};
+
 const StrategyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,7 +52,7 @@ const StrategyDetail: React.FC = () => {
   const [backtests, setBacktests] = useState<Backtest[]>([]);
   const [backtestModalVisible, setBacktestModalVisible] = useState(false);
   const [runningBacktest, setRunningBacktest] = useState(false);
-  const [selectedBacktest, setSelectedBacktest] = useState<{backtest: Backtest; result?: BacktestResult; equityCurve?: EquityCurvePoint[]} | null>(null);
+  const [selectedBacktest, setSelectedBacktest] = useState<{ backtest: Backtest; result?: BacktestResult; equityCurve?: EquityCurvePoint[] } | null>(null);
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const [rerunningBacktestId, setRerunningBacktestId] = useState<number | null>(null);
   const [form] = Form.useForm();
@@ -69,7 +82,7 @@ const StrategyDetail: React.FC = () => {
     try {
       const values = await form.validateFields();
       const [startDate, endDate] = values.dateRange;
-      
+
       const backtestData = {
         strategy_id: Number(id),
         name: values.name || `回测 ${dayjs().format('YYYY-MM-DD HH:mm')}`,
@@ -85,7 +98,7 @@ const StrategyDetail: React.FC = () => {
       message.success('回测任务创建成功');
       setBacktestModalVisible(false);
       form.resetFields();
-      
+
       setRunningBacktest(true);
       try {
         const runResponse = await strategyApi.runBacktest(response.data.id);
@@ -95,7 +108,7 @@ const StrategyDetail: React.FC = () => {
       } finally {
         setRunningBacktest(false);
       }
-      
+
       fetchData();
     } catch {
       message.error('创建回测失败');
@@ -273,12 +286,19 @@ const StrategyDetail: React.FC = () => {
           </Button>
         </div>
 
+        {strategy.is_builtin && (
+          <Alert
+            message="内置策略说明"
+            description={getStrategyTypeDescription(strategy.strategy_type)}
+            type="info"
+            showIcon
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+        )}
+
         <Descriptions style={{ marginTop: 24 }} column={2}>
           <Descriptions.Item label="策略类型">
             <Tag color="blue">{STRATEGY_TYPE_LABELS[strategy.strategy_type]}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="状态">
-            <Tag>{STRATEGY_STATUS_LABELS[strategy.status]}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="描述" span={2}>
             {strategy.description || '-'}
@@ -519,14 +539,14 @@ const StrategyDetail: React.FC = () => {
                       },
                       ...(selectedBacktest.equityCurve.some(p => p.benchmark !== undefined)
                         ? [
-                            {
-                              name: '基准',
-                              type: 'line',
-                              smooth: true,
-                              data: selectedBacktest.equityCurve.map(p => p.benchmark),
-                              lineStyle: { color: '#faad14' },
-                            },
-                          ]
+                          {
+                            name: '基准',
+                            type: 'line',
+                            smooth: true,
+                            data: selectedBacktest.equityCurve.map(p => p.benchmark),
+                            lineStyle: { color: '#faad14' },
+                          },
+                        ]
                         : []),
                     ],
                   }}
