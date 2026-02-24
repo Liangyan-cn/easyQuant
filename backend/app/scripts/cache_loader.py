@@ -155,29 +155,38 @@ async def update_ohlcv(pool: Optional[str] = None, stock: Optional[str] = None):
     logger.info(f"Starting OHLCV incremental update for {source} ({len(stocks)} stocks)...")
     
     cache = CacheService()
+    cached_stocks = set(cache._get_all_ohlcv_stocks() or [])
+    
+    stocks_not_cached = [s for s in stocks if s not in cached_stocks]
+    stocks_to_update = [s for s in stocks if s in cached_stocks]
+    
+    if stocks_not_cached:
+        logger.warning(f"These stocks are not in cache: {stocks_not_cached}")
+        logger.warning("Use 'preload --stock <code>' to add them first")
+        if not stocks_to_update:
+            return
 
     metadata = cache._metadata.get("ohlcv", {})
     last_date_str = metadata.get("date_range", [None, None])[1] if metadata else None
 
-    if last_date_str:
-        last_date = date.fromisoformat(last_date_str)
-        start_date = last_date + timedelta(days=1)
-    else:
-        logger.warning("No existing cache, running full preload instead")
-        await preload_ohlcv(force=False, pool=pool, stock=stock)
+    if not last_date_str:
+        logger.warning("No cache metadata found")
         return
 
+    last_date = date.fromisoformat(last_date_str)
+    start_date = last_date + timedelta(days=1)
     end_date = date.today()
+    
     if start_date > end_date:
-        logger.info("Cache is already up to date")
+        logger.info(f"Cache is already up to date (last date: {last_date})")
         return
 
-    logger.info(f"Updating data from {start_date} to {end_date}")
+    logger.info(f"Updating {len(stocks_to_update)} stocks from {start_date} to {end_date}")
 
     success_count = 0
     error_count = 0
 
-    for i, stock_code in enumerate(stocks):
+    for i, stock_code in enumerate(stocks_to_update):
         try:
             df = fetch_stock_data(stock_code, start_date, end_date)
 
@@ -198,7 +207,7 @@ async def update_ohlcv(pool: Optional[str] = None, stock: Optional[str] = None):
 
             cache.append_ohlcv(stock_code, df)
             success_count += 1
-            logger.info(f"[{i+1}/{len(stocks)}] Updated {stock_code}: {len(df)} new records")
+            logger.info(f"[{i+1}/{len(stocks_to_update)}] Updated {stock_code}: {len(df)} new records")
 
             time.sleep(REQUEST_DELAY)
 
