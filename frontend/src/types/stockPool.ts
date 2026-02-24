@@ -38,6 +38,7 @@ export interface StockPoolCreate {
   name: string;
   code: string;
   description?: string;
+  initial_stocks?: StockPoolItemCreate[];
 }
 
 export interface StockPoolUpdate {

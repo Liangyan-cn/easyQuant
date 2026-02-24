@@ -34,7 +34,7 @@ import type {
   StockPoolItem,
 } from '@/types/stockPool';
 import { POOL_TYPE_LABELS } from '@/types/stockPool';
-import StockSelector, { type StockOption } from './StockSelector';
+import StockSelector, { MultiStockSelector, type StockOption } from './StockSelector';
 
 const StockPoolTab: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +55,7 @@ const StockPoolTab: React.FC = () => {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [stockSearchKeyword, setStockSearchKeyword] = useState('');
   const [selectedStock, setSelectedStock] = useState<StockOption | null>(null);
+  const [initialStocks, setInitialStocks] = useState<StockOption[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -100,6 +101,7 @@ const StockPoolTab: React.FC = () => {
   const handleCreate = () => {
     setEditingPool(null);
     form.resetFields();
+    setInitialStocks([]);
     setModalVisible(true);
   };
 
@@ -130,11 +132,18 @@ const StockPoolTab: React.FC = () => {
         await stockPoolApi.updatePool(editingPool.id, updateData);
         message.success('更新成功');
       } else {
-        const createData: StockPoolCreate = values;
+        const createData: StockPoolCreate = {
+          ...values,
+          initial_stocks: initialStocks.map(s => ({
+            stock_code: s.code,
+            stock_name: s.name,
+          })),
+        };
         await stockPoolApi.createPool(createData);
         message.success('创建成功');
       }
       setModalVisible(false);
+      setInitialStocks([]);
       fetchPools();
     } catch {
       message.error(editingPool ? '更新失败' : '创建失败');
@@ -302,8 +311,12 @@ const StockPoolTab: React.FC = () => {
         title={editingPool ? '编辑股票池' : '新建股票池'}
         open={modalVisible}
         onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          setModalVisible(false);
+          setInitialStocks([]);
+        }}
         destroyOnClose
+        width={560}
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -314,16 +327,30 @@ const StockPoolTab: React.FC = () => {
             <Input placeholder="请输入股票池名称" />
           </Form.Item>
           {!editingPool && (
-            <Form.Item
-              name="code"
-              label="代码"
-              rules={[
-                { required: true, message: '请输入代码' },
-                { pattern: /^[a-z0-9_]+$/, message: '只能包含小写字母、数字和下划线' },
-              ]}
-            >
-              <Input placeholder="请输入股票池代码，如 my_watchlist" />
-            </Form.Item>
+            <>
+              <Form.Item
+                name="code"
+                label="代码"
+                rules={[
+                  { required: true, message: '请输入代码' },
+                  { pattern: /^[a-z0-9_]+$/, message: '只能包含小写字母、数字和下划线' },
+                ]}
+              >
+                <Input placeholder="请输入股票池代码，如 my_watchlist" />
+              </Form.Item>
+              <Form.Item label="初始股票（可选）">
+                <MultiStockSelector
+                  style={{ width: '100%' }}
+                  onStocksChange={setInitialStocks}
+                  placeholder="搜索并选择股票，支持多选"
+                />
+                {initialStocks.length > 0 && (
+                  <div style={{ marginTop: 8, color: '#666', fontSize: 12 }}>
+                    已选择 {initialStocks.length} 只股票
+                  </div>
+                )}
+              </Form.Item>
+            </>
           )}
           <Form.Item name="description" label="描述">
             <Input.TextArea rows={3} placeholder="请输入描述" />

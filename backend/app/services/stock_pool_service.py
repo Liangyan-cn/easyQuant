@@ -28,6 +28,16 @@ class StockPoolService:
         if existing:
             raise ConflictException(f"Stock pool with code '{data.code}' already exists")
         pool = await self.repo.create(data, user_id)
+        
+        if data.initial_stocks:
+            for stock in data.initial_stocks:
+                item_data = StockPoolItemCreate(
+                    stock_code=stock.stock_code,
+                    stock_name=stock.stock_name
+                )
+                await self.repo.add_stock(pool.id, item_data)
+            pool = await self.repo.get_by_id(pool.id)
+        
         return self._to_response(pool)
 
     async def get_pool(self, pool_id: int, user_id: int) -> StockPoolDetailResponse:

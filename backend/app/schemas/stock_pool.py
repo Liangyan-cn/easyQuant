@@ -10,10 +10,16 @@ class StockPoolType(str, Enum):
     USER = "user"
 
 
+class StockPoolItemInput(BaseModel):
+    stock_code: str = Field(..., min_length=1, max_length=20)
+    stock_name: Optional[str] = None
+
+
 class StockPoolCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     code: str = Field(..., min_length=1, max_length=50, pattern=r"^[a-z0-9_]+$")
     description: Optional[str] = None
+    initial_stocks: Optional[List[StockPoolItemInput]] = None
 
 
 class StockPoolUpdate(BaseModel):
