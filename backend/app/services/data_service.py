@@ -535,11 +535,30 @@ def get_financial_indicators(code: str, limit: int = 8) -> FinancialIndicatorRes
         if _is_financial_cache_valid(cache_time):
             return cached_response
     
-    items = _fetch_indicators_from_akshare(code, limit)
-    response = FinancialIndicatorResponse(code=code, items=items)
-    _indicators_cache[cache_key] = (datetime.now(), response)
+    cache = CacheService()
+    cached_df = cache.get_financial_indicators(code)
+    if cached_df is not None and not cached_df.empty:
+        items = _df_to_financial_indicator_items(cached_df.head(limit))
+        response = FinancialIndicatorResponse(code=code, items=items)
+        _indicators_cache[cache_key] = (datetime.now(), response)
+        logger.info(f"Financial indicators cache hit for {code}")
+        return response
     
-    return response
+    try:
+        items = _fetch_indicators_from_akshare(code, limit)
+        response = FinancialIndicatorResponse(code=code, items=items)
+        _indicators_cache[cache_key] = (datetime.now(), response)
+        
+        if items:
+            df = _financial_indicator_items_to_df(items)
+            cache.save_financial_indicators(code, df)
+        
+        return response
+    except RuntimeError as e:
+        if "Connection aborted" in str(e) or "Remote end closed" in str(e):
+            logger.warning(f"AKShare rate limited for financial indicators {code}")
+            return FinancialIndicatorResponse(code=code, items=[])
+        raise
 
 
 def get_valuation(code: str, limit: int = 30) -> ValuationResponse:
@@ -550,11 +569,30 @@ def get_valuation(code: str, limit: int = 30) -> ValuationResponse:
         if _is_financial_cache_valid(cache_time):
             return cached_response
     
-    items = _fetch_valuation_from_akshare(code, limit)
-    response = ValuationResponse(code=code, items=items)
-    _valuation_cache[cache_key] = (datetime.now(), response)
+    cache = CacheService()
+    cached_df = cache.get_valuation(code)
+    if cached_df is not None and not cached_df.empty:
+        items = _df_to_valuation_items(cached_df.head(limit))
+        response = ValuationResponse(code=code, items=items)
+        _valuation_cache[cache_key] = (datetime.now(), response)
+        logger.info(f"Valuation cache hit for {code}")
+        return response
     
-    return response
+    try:
+        items = _fetch_valuation_from_akshare(code, limit)
+        response = ValuationResponse(code=code, items=items)
+        _valuation_cache[cache_key] = (datetime.now(), response)
+        
+        if items:
+            df = _valuation_items_to_df(items)
+            cache.save_valuation(code, df)
+        
+        return response
+    except RuntimeError as e:
+        if "Connection aborted" in str(e) or "Remote end closed" in str(e):
+            logger.warning(f"AKShare rate limited for valuation {code}")
+            return ValuationResponse(code=code, items=[])
+        raise
 
 
 def get_dividend(code: str, limit: int = 10) -> DividendResponse:
@@ -565,8 +603,103 @@ def get_dividend(code: str, limit: int = 10) -> DividendResponse:
         if _is_financial_cache_valid(cache_time):
             return cached_response
     
-    items = _fetch_dividend_from_akshare(code, limit)
-    response = DividendResponse(code=code, items=items)
-    _dividend_cache[cache_key] = (datetime.now(), response)
-    
-    return response
+    try:
+        items = _fetch_dividend_from_akshare(code, limit)
+        response = DividendResponse(code=code, items=items)
+        _dividend_cache[cache_key] = (datetime.now(), response)
+        return response
+    except RuntimeError as e:
+        if "Connection aborted" in str(e) or "Remote end closed" in str(e):
+            logger.warning(f"AKShare rate limited for dividend {code}")
+            return DividendResponse(code=code, items=[])
+        raise
+
+
+def _df_to_financial_indicator_items(df: pd.DataFrame) -> list[FinancialIndicatorItem]:
+    items = []
+    for _, row in df.iterrows():
+        items.append(FinancialIndicatorItem(
+            date=pd.to_datetime(row.get("date")).date() if pd.notna(row.get("date")) else None,
+            roe=row.get("roe"),
+            roa=row.get("roa"),
+            gross_margin=row.get("gross_margin"),
+            net_margin=row.get("net_margin"),
+            operating_margin=row.get("operating_margin"),
+            asset_turnover=row.get("asset_turnover"),
+            inventory_turnover=row.get("inventory_turnover"),
+            receivable_turnover=row.get("receivable_turnover"),
+            current_ratio=row.get("current_ratio"),
+            quick_ratio=row.get("quick_ratio"),
+            debt_to_equity=row.get("debt_to_equity"),
+            interest_coverage=row.get("interest_coverage"),
+            revenue_growth=row.get("revenue_growth"),
+            profit_growth=row.get("profit_growth"),
+            eps_growth=row.get("eps_growth"),
+        ))
+    return items
+
+
+def _financial_indicator_items_to_df(items: list[FinancialIndicatorItem]) -> pd.DataFrame:
+    data = []
+    for item in items:
+        data.append({
+            "date": item.date.isoformat() if item.date else None,
+            "roe": item.roe,
+            "roa": item.roa,
+            "gross_margin": item.gross_margin,
+            "net_margin": item.net_margin,
+            "operating_margin": item.operating_margin,
+            "asset_turnover": item.asset_turnover,
+            "inventory_turnover": item.inventory_turnover,
+            "receivable_turnover": item.receivable_turnover,
+            "current_ratio": item.current_ratio,
+            "quick_ratio": item.quick_ratio,
+            "debt_to_equity": item.debt_to_equity,
+            "interest_coverage": item.interest_coverage,
+            "revenue_growth": item.revenue_growth,
+            "profit_growth": item.profit_growth,
+            "eps_growth": item.eps_growth,
+        })
+    return pd.DataFrame(data)
+
+
+def _df_to_valuation_items(df: pd.DataFrame) -> list[ValuationItem]:
+    items = []
+    for _, row in df.iterrows():
+        items.append(ValuationItem(
+            date=pd.to_datetime(row.get("date")).date() if pd.notna(row.get("date")) else None,
+            pe_ratio=row.get("pe_ratio"),
+            pe_ttm=row.get("pe_ttm"),
+            pb_ratio=row.get("pb_ratio"),
+            ps_ratio=row.get("ps_ratio"),
+            ps_ttm=row.get("ps_ttm"),
+            pcf_ratio=row.get("pcf_ratio"),
+            ev=row.get("ev"),
+            ev_to_ebitda=row.get("ev_to_ebitda"),
+            market_cap=row.get("market_cap"),
+            circulating_market_cap=row.get("circulating_market_cap"),
+            total_shares=row.get("total_shares"),
+            circulating_shares=row.get("circulating_shares"),
+        ))
+    return items
+
+
+def _valuation_items_to_df(items: list[ValuationItem]) -> pd.DataFrame:
+    data = []
+    for item in items:
+        data.append({
+            "date": item.date.isoformat() if item.date else None,
+            "pe_ratio": item.pe_ratio,
+            "pe_ttm": item.pe_ttm,
+            "pb_ratio": item.pb_ratio,
+            "ps_ratio": item.ps_ratio,
+            "ps_ttm": item.ps_ttm,
+            "pcf_ratio": item.pcf_ratio,
+            "ev": item.ev,
+            "ev_to_ebitda": item.ev_to_ebitda,
+            "market_cap": item.market_cap,
+            "circulating_market_cap": item.circulating_market_cap,
+            "total_shares": item.total_shares,
+            "circulating_shares": item.circulating_shares,
+        })
+    return pd.DataFrame(data)
