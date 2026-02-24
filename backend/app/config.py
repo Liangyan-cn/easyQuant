@@ -27,5 +27,11 @@ class Settings(BaseSettings):
 
     DEBUG: bool = False
 
+    AKSHARE_RATE_LIMIT_QPS: float = 0.5
+    AKSHARE_RATE_LIMIT_BURST: int = 3
+    AKSHARE_RETRY_MAX_ATTEMPTS: int = 3
+    AKSHARE_RETRY_BASE_DELAY: float = 2.0
+    AKSHARE_RETRY_MAX_DELAY: float = 120.0
+
 
 settings = Settings()

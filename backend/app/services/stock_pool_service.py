@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
 from app.models.stock_pool import StockPool, StockPoolType
 from app.repositories.stock_pool_repo import StockPoolRepository
+from app.services.rate_limiter import akshare_api
 from app.schemas.stock_pool import (
     StockPoolCreate,
     StockPoolDetailResponse,
@@ -16,6 +17,19 @@ from app.schemas.stock_pool import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@akshare_api(timeout=30.0, max_retries=3)
+def _fetch_index_stocks_from_akshare(index_code: str) -> List[dict]:
+    import akshare as ak
+    df = ak.index_stock_cons(symbol=index_code)
+    stocks = []
+    for _, row in df.iterrows():
+        stocks.append({
+            "stock_code": str(row.get("品种代码", row.get("constituent_code", ""))),
+            "stock_name": str(row.get("品种名称", row.get("constituent_name", ""))),
+        })
+    return stocks
 
 
 class StockPoolService:
@@ -108,20 +122,7 @@ class StockPoolService:
         return count
 
     def _fetch_index_stocks(self, index_code: str) -> List[dict]:
-        try:
-            import akshare as ak
-            df = ak.index_stock_cons(symbol=index_code)
-            stocks = []
-            for _, row in df.iterrows():
-                stocks.append({
-                    "stock_code": str(row.get("品种代码", row.get("constituent_code", ""))),
-                    "stock_name": str(row.get("品种名称", row.get("constituent_name", ""))),
-                })
-            return stocks
-        except ImportError:
-            raise RuntimeError("AKShare not installed")
-        except Exception as e:
-            raise RuntimeError(f"Failed to fetch index stocks: {e}")
+        return _fetch_index_stocks_from_akshare(index_code)
 
     def _can_view(self, pool: StockPool, user_id: int) -> bool:
         return pool.pool_type == StockPoolType.SYSTEM.value or pool.user_id == user_id
