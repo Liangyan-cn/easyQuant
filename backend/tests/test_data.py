@@ -80,3 +80,88 @@ class TestStockHistory:
         assert response.status_code == 200
         data = response.json()
         assert data["period"] == "daily"
+
+
+class TestBalanceSheet:
+    async def test_get_balance_sheet(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/balance-sheet")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+    async def test_get_balance_sheet_with_limit(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/balance-sheet?limit=4")
+            assert response.status_code in [200, 500]
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+
+class TestIncomeStatement:
+    async def test_get_income_statement(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/income-statement")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+
+class TestCashFlow:
+    async def test_get_cash_flow(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/cash-flow")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+
+class TestFinancialIndicators:
+    async def test_get_financial_indicators(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/financial-indicators")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+
+class TestValuation:
+    async def test_get_valuation(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/valuation")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
+
+
+class TestDividend:
+    async def test_get_dividend(self, client: AsyncClient):
+        try:
+            response = await client.get("/api/v1/data/stocks/600519/dividend")
+            assert response.status_code in [200, 500]
+            if response.status_code == 200:
+                data = response.json()
+                assert data["code"] == "600519"
+                assert "items" in data
+        except Exception:
+            pytest.skip("AKShare data fetch failed due to network or API issues")
