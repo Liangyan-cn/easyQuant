@@ -1,7 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Select, Spin } from 'antd';
 import type { SelectProps } from 'antd';
-import debounce from 'lodash/debounce';
 import { stockApi } from '@/api/stock';
 import type { StockInfo } from '@/types/stock';
 
@@ -23,15 +22,21 @@ const StockSelector: React.FC<StockSelectorProps> = ({
 }) => {
   const [options, setOptions] = useState<StockOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const abortControllerRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchStocks = useCallback(
-    debounce(async (keyword: string) => {
-      if (!keyword || keyword.length < 1) {
-        setOptions([]);
-        return;
-      }
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
 
+    if (!keyword || keyword.length < 1) {
+      setOptions([]);
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -54,12 +59,17 @@ const StockSelector: React.FC<StockSelectorProps> = ({
       } finally {
         setLoading(false);
       }
-    }, 300),
-    []
-  );
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [keyword]);
 
   const handleSearch = (value: string) => {
-    fetchStocks(value);
+    setKeyword(value);
   };
 
   const handleChange = (value: string) => {
@@ -69,6 +79,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({
 
   const handleClear = () => {
     setOptions([]);
+    setKeyword('');
     onStockSelect?.(null);
   };
 
