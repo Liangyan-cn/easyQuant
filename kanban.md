@@ -2,11 +2,11 @@
 
 ## 🏃 当前 Sprint
 
-**Sprint ID**: Sprint 11
-**标题**: 股票池管理与数据缓存
+**Sprint ID**: Sprint 12
+**标题**: 用户体验优化 - 新手引导与易用性提升
 **状态**: 🔄 进行中
-**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
-**目标**: 实现股票池管理功能，建立数据缓存机制，支持沪深300+中证500成分股数据的高效访问
+**里程碑**: M2.0 - 沙盒系统 (用户体验)
+**目标**: 为小白用户提供功能引导、解释说明，提升系统易用性
 **启动日期**: 2026-02-24
 
 ### 强制任务
@@ -16,57 +16,84 @@
 
 ### 任务列表
 
-#### TASK-1: 股票池管理 (P0) ✅
+#### TASK-1: 新手引导系统 (P0)
 
-**说明**: 实现股票池的数据模型和 CRUD API，支持用户创建自定义股票池，系统预置沪深300和中证500
+**说明**: 为首次使用的用户提供功能引导，帮助理解系统核心概念
 
 **依赖**: 无
 
 **子任务**:
-- [x] 设计 StockPool 和 StockPoolItem 数据库模型
-- [x] 实现股票池 CRUD API (创建/读取/更新/删除)
-- [x] 实现股票池成员管理 API (添加/删除股票)
-- [x] 实现从指数导入成分股功能 (沪深300/中证500)
-- [x] 初始化系统预置股票池 (沪深300、中证500)
-- [ ] 前端股票池管理页面
+- [ ] 设计引导流程 (首页 → 因子 → 策略 → 回测 → 沙盒)
+- [ ] 实现引导组件 (Tooltip、Popover、步骤指示器)
+- [ ] 添加关键功能的引导触发点
+- [ ] 实现引导状态持久化 (localStorage)
+
+**交付产物**: {任务完成后补充}
+
+#### TASK-2: 概念解释与帮助文档 (P1)
+
+**说明**: 为量化交易核心概念提供通俗易懂的解释
+
+**依赖**: 无
+
+**子任务**:
+- [ ] 因子概念解释 (什么是因子、因子类型、如何使用)
+- [ ] 策略概念解释 (策略结构、参数含义、信号生成)
+- [ ] 回测概念解释 (回测原理、绩效指标含义)
+- [ ] 沙盒概念解释 (虚拟账户、策略部署、净值计算)
+- [ ] 添加 "?" 帮助图标，hover 显示解释
+
+**交付产物**: {任务完成后补充}
+
+#### TASK-3: 表单优化与输入提示 (P1)
+
+**说明**: 优化表单交互，提供输入提示和默认值
+
+**依赖**: 无
+
+**子任务**:
+- [ ] 因子创建表单优化 (公式示例、参数说明)
+- [ ] 策略创建表单优化 (代码模板、参数说明)
+- [ ] 回测配置表单优化 (日期选择器、参数范围提示)
+- [ ] 沙盒部署表单优化 (股票池选择、资金分配说明)
+
+**交付产物**: {任务完成后补充}
+
+#### TASK-4: 空状态与引导页面 (P2)
+
+**说明**: 为空列表页面提供引导，告诉用户下一步该做什么
+
+**依赖**: 无
+
+**子任务**:
+- [ ] 因子列表空状态 (引导创建第一个因子)
+- [ ] 策略列表空状态 (引导创建或使用内置策略)
+- [ ] 回测列表空状态 (引导执行第一次回测)
+- [ ] 沙盒账户空状态 (引导创建虚拟账户)
+
+**交付产物**: {任务完成后补充}
+
+---
+
+### ⏸️ Sprint 11: 股票池管理与数据缓存 (暂停)
+
+**状态**: ⏸️ 暂停 (因 AKShare 限流无法完成缓存预加载测试)
+**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
+**目标**: 实现股票池管理功能，建立数据缓存机制
+**启动日期**: 2026-02-24
+
+**已完成任务**:
+- ✅ TASK-1: 股票池管理 (P0) - 后端 API 完成，前端待开发
+- ✅ TASK-2: 数据缓存方案 (P1) - 核心功能完成，预加载因限流暂停
+
+**待恢复条件**: AKShare 限流解除后继续预加载测试
 
 **交付产物**:
 - `backend/app/models/stock_pool.py` - StockPool, StockPoolItem 数据模型
-- `backend/app/schemas/stock_pool.py` - Pydantic Schema
-- `backend/app/repositories/stock_pool_repo.py` - Repository 层
-- `backend/app/services/stock_pool_service.py` - Service 层
-- `backend/app/api/v1/endpoints/stock_pool.py` - 8 个 API 端点
-- `backend/app/services/stock_pool_init.py` - 系统池初始化脚本
-- `backend/tests/test_stock_pool.py` - 9 个测试用例 (100% 通过)
-
-#### TASK-2: 数据缓存方案 (P1) ✅
-
-**说明**: 实现股票池内数据的内存缓存机制，支持启动预加载和增量更新，提升数据访问效率
-
-**依赖**: TASK-1
-
-**子任务**:
-- [x] 设计缓存数据结构 (股票池→股票→数据类型)
-- [x] 实现启动时预加载逻辑 (加载股票池内所有股票数据)
-- [x] 实现增量更新机制 (每日收盘后更新当日数据)
-- [x] 实现缓存状态查询 API (查看缓存命中率、数据量等)
-- [ ] 集成定时任务调度 (APScheduler) - 改为脚本手动触发
-
-**交付产物**:
-- `backend/app/schemas/cache.py` - 缓存 Schema 定义
-- `backend/app/services/cache_service.py` - CacheService 核心服务 (Parquet 持久化)
-- `backend/app/scripts/cache_loader.py` - 预加载/更新脚本
-- `backend/app/api/v1/endpoints/cache.py` - 缓存状态 API
-- `backend/tests/test_cache.py` - 4 个测试用例 (100% 通过)
-
-**使用方式**:
-```bash
-# 预加载沪深300+中证500数据
-cd backend && ./venv/bin/python -m app.scripts.cache_loader preload
-
-# 查看缓存状态
-cd backend && ./venv/bin/python -m app.scripts.cache_loader status
-```
+- `backend/app/services/cache_service.py` - CacheService (Parquet 持久化)
+- `backend/app/scripts/cache_loader.py` - 预加载脚本
+- `backend/tests/test_stock_pool.py` - 9 个测试
+- `backend/tests/test_cache.py` - 4 个测试
 
 ---
 
@@ -319,6 +346,13 @@ cd backend && ./venv/bin/python -m app.scripts.cache_loader status
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
 | 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
 | ---------- | ------------------------------  |
 | 产品愿景   | `docs/product/vision.md`        |
 | 用户故事   | `docs/product/user_stories.md`  |
