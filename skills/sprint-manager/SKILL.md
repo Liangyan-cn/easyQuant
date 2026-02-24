@@ -21,7 +21,35 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 4.  **结构维持**: 严格保持 `kanban.md` 的章节顺序：Current Sprint -> Backlog -> Milestones -> History。
 5.  **语言**: 总结和任务描述必须使用 **简体中文**。
 6.  **Git 规范**: 代码提交必须遵循 `references/git-guidelines.md`，仅生成提交命令建议，**严禁自动执行提交**。
+7.  **任务规模分级**: 每个任务必须标注规模 (S/M/L/XL) 和入口技能。
+8.  **技能工作流**: 任务执行必须遵循 `skills/SKILL-WORKFLOW.md` 定义的流程。
 </principles>
+
+## 1.1 任务规模分级标准
+
+| 级别   | 名称     | 时间估算         | 入口技能                                                     | 示例                       |
+| ------ | -------- | ---------------- | ------------------------------------------------------------ | -------------------------- |
+| **S**  | 微任务   | < 5 分钟         | 直接执行                                                     | 修复 typo、调整配置        |
+| **M**  | 小任务   | 5-30 分钟        | `task-executor`                                              | 修复简单 bug、添加简单 API |
+| **L**  | 中等任务 | 30 分钟 - 2 小时 | `brainstorming` → `writing-plans`                            | 新增功能模块               |
+| **XL** | 大型任务 | 2+ 小时          | `spec-generator` → `tech-design-generator` → `writing-plans` | 新增子系统                 |
+
+**规模判断流程**:
+```
+新任务 → 是否涉及新功能？
+           │
+           ├─ 否 → S/M 级
+           │
+           └─ 是 → 是否需要设计？
+                    │
+                    ├─ 否 → M 级
+                    │
+                    └─ 是 → 是否跨多模块？
+                             │
+                             ├─ 否 → L 级
+                             │
+                             └─ 是 → XL 级
+```
 
 ## 2. Capabilities & Workflow
 <capabilities>
@@ -111,10 +139,38 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
     - 收集任务执行过程中产生的所有产出
     - 更新任务卡片中的交付产物表格
     - 包括计划内和计划外的有价值产出
-2.  **更新状态**:
+2.  **🧪 测试验证 (Test Verification) - 必执行** ⭐⭐:
+    > ⚠️ **强制检查点**: 任务完成前必须评估并执行测试验证
+    
+    **测试策略评估**:
+    | 任务类型  | 推荐测试            | 说明                    |
+    | --------- | ------------------- | ----------------------- |
+    | 后端 API  | 单元测试 + 接口测试 | `pytest backend/tests/` |
+    | 前端组件  | 组件测试            | `npm test`              |
+    | 核心功能  | E2E 测试            | `npx playwright test`   |
+    | 配置/工具 | 手动验证            | 验证功能可用            |
+    
+    **执行流程**:
+    - 评估任务类型，确定测试策略
+    - 检查是否需要补充测试用例
+    - 运行相关测试，确保通过
+    - 记录测试结果到交付产物
+    
+    **测试命令参考**:
+    ```bash
+    # 后端测试
+    cd backend && ./venv/bin/pytest tests/ -v
+    
+    # 前端测试
+    cd frontend && npm test
+    
+    # E2E 测试
+    cd frontend && npx playwright test
+    ```
+3.  **更新状态**:
     - 将任务状态从 `[ ]` 改为 `[x]`
     - 将子任务状态全部标记为完成
-3.  **完成度检测** ⭐:
+4.  **完成度检测** ⭐:
     - 检查当前 Sprint 所有任务是否已完成
     - 如果 **所有任务都已完成**，主动提醒用户：
       ```
@@ -179,23 +235,23 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
     - 评估文档是否需要更新（新增功能是否已体现、API 是否完整等）
     
     **必须检查的文档类别**:
-    | 类别 | 检查重点 |
-    | ---- | -------- |
-    | 产品文档 | backlog.md 状态是否同步、milestones.md 进度是否更新 |
+    | 类别     | 检查重点                                                        |
+    | -------- | --------------------------------------------------------------- |
+    | 产品文档 | backlog.md 状态是否同步、milestones.md 进度是否更新             |
     | 技术文档 | architecture.md 是否反映新模块、api-reference.md 是否包含新端点 |
-    | 项目文档 | README.md 项目状态是否更新 |
+    | 项目文档 | README.md 项目状态是否更新                                      |
     
     **生成检查报告** (必须输出):
     ```markdown
     ## 📄 核心文档检查报告
     
     ### 检查结果
-    | 文档       | 路径                        | 状态       | 说明                     |
-    | ---------- | --------------------------- | ---------- | ------------------------ |
-    | 技术架构   | `docs/tech/architecture.md` | ⚠️ 需更新  | 新增因子模块未体现       |
-    | API 参考   | `docs/api-reference.md`     | ⚠️ 需更新  | 缺少新增的 /factors 端点 |
-    | 数据模型   | `docs/tech/data_model.md`   | ✅ 最新    | -                        |
-    | 产品待办   | `docs/product/backlog.md`   | ⚠️ 需更新  | Sprint 完成状态未同步    |
+    | 文档     | 路径                        | 状态     | 说明                     |
+    | -------- | --------------------------- | -------- | ------------------------ |
+    | 技术架构 | `docs/tech/architecture.md` | ⚠️ 需更新 | 新增因子模块未体现       |
+    | API 参考 | `docs/api-reference.md`     | ⚠️ 需更新 | 缺少新增的 /factors 端点 |
+    | 数据模型 | `docs/tech/data_model.md`   | ✅ 最新   | -                        |
+    | 产品待办 | `docs/product/backlog.md`   | ⚠️ 需更新 | Sprint 完成状态未同步    |
     
     ### 📝 文档更新任务 (自动添加到 Backlog)
     - [ ] 更新 api-reference.md: 添加 /factors 端点文档
@@ -205,11 +261,53 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
     **后续动作**:
     - **如有需更新的文档**: 自动在 `kanban.md` 的 Backlog 中添加 `TASK-DOC: 文档更新` 任务
     - **检查报告必须包含在 Sprint Summary 中**
-4.  **归档 (Archive)**:
+4.  **🧪 全量回归测试 (Regression Test) - 必执行** ⭐⭐:
+    > ⚠️ **强制检查点**: Sprint 结束前必须运行全量回归测试，确保系统可用
+    
+    **测试执行流程**:
+    ```bash
+    # 1. 后端测试
+    cd backend && ./venv/bin/pytest tests/ -v --tb=short
+    
+    # 2. 前端构建检查
+    cd frontend && npm run build
+    
+    # 3. 类型检查
+    cd frontend && npm run typecheck  # 如果有
+    
+    # 4. Lint 检查
+    cd backend && ./venv/bin/ruff check app/
+    cd frontend && npm run lint
+    ```
+    
+    **测试结果报告** (必须输出):
+    ```markdown
+    ## 🧪 回归测试报告
+    
+    ### 测试执行结果
+    | 测试类型     | 状态   | 通过/总数 | 说明       |
+    | ------------ | ------ | --------- | ---------- |
+    | 后端单元测试 | ✅ 通过 | 45/45     | -          |
+    | 前端构建     | ✅ 通过 | -         | 无错误     |
+    | 类型检查     | ✅ 通过 | -         | 无类型错误 |
+    | Lint 检查    | ⚠️ 警告 | -         | 3 个警告   |
+    
+    ### 失败用例 (如有)
+    | 测试文件 | 用例名 | 错误信息 |
+    | -------- | ------ | -------- |
+    | -        | -      | -        |
+    ```
+    
+    **阻断规则**:
+    - ❌ 单元测试失败 → **阻断 Sprint 结束**，必须修复
+    - ❌ 前端构建失败 → **阻断 Sprint 结束**，必须修复
+    - ⚠️ Lint 警告 → 记录到 Backlog，不阻断
+    
+5.  **归档 (Archive)**:
     - 创建 Sprint Summary 文档。
     - 将 `kanban.md` 中的详细任务移动到 Summary。
-    - Summary 必须包含: `用户故事演示 (User Story Demo)`, `关键缺陷 (Critical Bugs)`, `效率复盘 (Efficiency)`.
-5.  **Git 提交检查 (Git Check)**:
+    - Summary 必须包含: `用户故事演示 (User Story Demo)`, `关键缺陷 (Critical Bugs)`, `效率复盘 (Efficiency)`, `回归测试报告`.
+6.  **Git 提交检查 (Git Check)**:
     - 运行 `git status` 和 `git diff` 评估变更。
     - 检查是否存在不合规的新增文件 (如 `.trae/`, `data/eval/failed.json`)。
     - 如果发现，更新 `.gitignore`。
@@ -217,7 +315,7 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
         - 分析变更文件类型，生成符合 Conventional Commits 规范的多条提交建议。
         - 优先建议拆分提交 (e.g., `feat: ...`, `docs: ...`, `chore: ...`) 而不是单一的 `git add .`。
     - **仅在控制台显示 (Console Warning Only)**: 提交建议仅作为 Console Warning 显示，**不要**包含在 Summary 文件中。
-6.  **清理 (Clean Up)**:
+7.  **清理 (Clean Up)**:
     - 更新 `kanban.md` 中 Sprint 状态为已完成。
     - 只保留 **关键交付物** 和 **完工验收 (Definition of Done)**。
     - 将未完成事项回退到 Backlog。
@@ -251,6 +349,9 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 ```markdown
 #### TASK-{N}: {任务标题} ({优先级})
 
+**规模**: {S/M/L/XL}
+**入口技能**: {task-executor / brainstorming / spec-generator}
+
 **说明**: {任务描述，说明要做什么、为什么要做}
 
 **依赖**: {依赖的前置任务，如 TASK-1, TASK-2；无依赖则填"无"}
@@ -265,7 +366,10 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 
 #### 完整模板 (任务完成后)
 ```markdown
-#### TASK-{N}: {任务标题} ({优先级})
+#### TASK-{N}: {任务标题} ({优先级}) ✅
+
+**规模**: {S/M/L/XL}
+**入口技能**: {实际使用的技能链}
 
 **说明**: {任务描述，说明要做什么、为什么要做}
 
@@ -280,22 +384,29 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 | 产物       | 路径             | 说明       |
 | ---------- | ---------------- | ---------- |
 | {产物名称} | `{path/to/file}` | {简要说明} |
+
+**设计文档**: `docs/plans/YYYY-MM-DD-xxx.md` (L/XL 任务必填)
 ```
 
 #### 格式说明
-| 元素       | 格式                                    | 示例                       |
-| ---------- | --------------------------------------- | -------------------------- |
-| **任务ID** | `TASK-{N}`                              | `TASK-1`, `TASK-2`         |
-| **优先级** | `(P0/P1/P2)`                            | `(P0)` 最高优先级          |
-| **依赖**   | `TASK-{N}` 或 `无`                      | `TASK-1, TASK-2` 或 `无`   |
-| **复杂度** | `` `🟢低` `` / `` `🟡中` `` / `` `🔴高` `` | `` `🟡中` `` (可选)         |
-| **状态**   | `[ ]` / `[x]`                           | `[ ]` 待开始, `[x]` 已完成 |
+| 元素         | 格式                                    | 示例                       |
+| ------------ | --------------------------------------- | -------------------------- |
+| **任务ID**   | `TASK-{N}`                              | `TASK-1`, `TASK-2`         |
+| **优先级**   | `(P0/P1/P2)`                            | `(P0)` 最高优先级          |
+| **规模**     | `S/M/L/XL`                              | `L` 中等任务               |
+| **入口技能** | 技能名称                                | `brainstorming`            |
+| **依赖**     | `TASK-{N}` 或 `无`                      | `TASK-1, TASK-2` 或 `无`   |
+| **复杂度**   | `` `🟢低` `` / `` `🟡中` `` / `` `🔴高` `` | `` `🟡中` `` (可选)         |
+| **状态**     | `[ ]` / `[x]`                           | `[ ]` 待开始, `[x]` 已完成 |
 
 #### 完整示例
 
 **创建时 (交付产物待定)**:
 ```markdown
 #### TASK-1: 因子数据模型与 API (P0)
+
+**规模**: L
+**入口技能**: brainstorming → writing-plans
 
 **说明**: 实现因子的数据库模型和 CRUD API，支持因子的增删改查操作
 

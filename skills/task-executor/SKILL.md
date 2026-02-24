@@ -51,13 +51,52 @@ description: "Use for SIMPLE tasks that don't need full brainstorming - directly
       - 引用对应的 ADR（如果存在）
 5.  `[Code] Implementation`: 编写代码和测试。
     - **输出**: 核心代码、单元测试
-6.  **`[Code] Evaluation Script`: 如果是 P0/P1 任务，创建评测脚本和 Golden Dataset。**
+6.  **`[Test] 测试策略评估与执行` ⭐⭐ - 必执行**:
+    > ⚠️ **强制检查点**: 任务完成前必须评估并执行测试验证
+    
+    **测试策略评估**:
+    | 任务类型         | 推荐测试 | 命令                                                   |
+    | ---------------- | -------- | ------------------------------------------------------ |
+    | 后端 API/Service | 单元测试 | `cd backend && ./venv/bin/pytest tests/test_xxx.py -v` |
+    | 前端组件         | 组件测试 | `cd frontend && npm test`                              |
+    | 核心功能/集成    | E2E 测试 | `cd frontend && npx playwright test`                   |
+    | 配置/工具/文档   | 手动验证 | 验证功能可用                                           |
+    
+    **执行流程**:
+    1. 评估任务类型，确定测试策略
+    2. 检查是否有现有测试覆盖
+    3. **如需补充测试**: 编写测试用例
+    4. 运行相关测试，确保通过
+    5. 记录测试结果
+    
+    **测试命令参考**:
+    ```bash
+    # 后端单元测试
+    cd backend && ./venv/bin/pytest tests/ -v --tb=short
+    
+    # 运行特定测试文件
+    cd backend && ./venv/bin/pytest tests/test_xxx.py -v
+    
+    # 前端测试
+    cd frontend && npm test
+    
+    # E2E 测试
+    cd frontend && npx playwright test
+    ```
+    
+    **输出**: 测试通过报告、新增测试用例（如有）
+7.  **`[Code] Evaluation Script`: 如果是 P0/P1 任务，创建评测脚本和 Golden Dataset。**
     - **触发条件**: 核心功能、有量化指标
     - **输出**: `scripts/eval_*.py`, `data/eval/*_golden.json`
-7.  `[QA] Verification`: 手动演示和自动测试。
-    - **输出**: 评测报告、通过验收标准
 8.  **`[QA] Code Quality Check`: 运行 Lint/Type Check。**
-    - **命令**: `ruff check --fix`, `mypy src/`
+    - **命令**: 
+      ```bash
+      # 后端
+      cd backend && ./venv/bin/ruff check app/ --fix
+      
+      # 前端
+      cd frontend && npm run lint
+      ```
 9.  `[Git] Check`: 运行 `git diff` 检查 (参考 `git-guidelines.md`)，并提供 `git commit` 命令供用户执行（**严禁自动提交**）。
 
 **进度追踪**: 每完成一个子任务，立即使用 TodoWrite 标记为 completed。
@@ -154,9 +193,15 @@ def retry_with_backoff(func, max_retries=3):
 
 - [ ] **文档完整性**: PRD/Tech Design/ADR (如需)
 - [ ] **验收标准**: 量化的 DoD（如准确率 >= 80%, 延迟 < 200ms）
+- [ ] **🧪 测试验证** ⭐⭐: 
+  - [ ] 评估测试策略（单测/接口测试/E2E/手动验证）
+  - [ ] 运行相关测试，确保通过
+  - [ ] 如需补充测试，编写测试用例
 - [ ] **评测脚本**: P0/P1 任务必须有评测脚本和 Golden Dataset
 - [ ] **降级策略**: 错误处理和降级逻辑
-- [ ] **代码质量**: 通过 Lint/Type Check (`ruff check --fix`, `mypy src/`)
+- [ ] **代码质量**: 通过 Lint/Type Check
+  - 后端: `cd backend && ./venv/bin/ruff check app/`
+  - 前端: `cd frontend && npm run lint`
 - [ ] **进度追踪**: TodoWrite 实时更新（每完成一个子任务立即标记）
 - [ ] **ADR 记录**: 重大技术选型必须创建 ADR
 
