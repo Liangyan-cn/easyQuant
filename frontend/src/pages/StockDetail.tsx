@@ -1,13 +1,53 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space, Table, Tabs, Row, Col, Statistic } from 'antd';
-import { ArrowLeftOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space, Table, Tabs, Row, Col, Statistic, Alert, Result } from 'antd';
+import { ArrowLeftOutlined, ArrowUpOutlined, ArrowDownOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { stockApi } from '@/api/stock';
 import type { StockHistoryResponse, OHLCVItem, FinancialIndicatorResponse, ValuationResponse } from '@/types/stock';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+interface DataError {
+  type: 'rate_limit' | 'network' | 'server' | 'unknown';
+  message: string;
+  retryable: boolean;
+}
+
+const parseError = (error: unknown): DataError => {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const data = error.response?.data;
+    
+    if (status === 429 || data?.detail?.includes?.('限流') || data?.detail?.includes?.('rate limit')) {
+      return {
+        type: 'rate_limit',
+        message: '数据源请求频率限制，请稍后重试',
+        retryable: true,
+      };
+    }
+    if (status === 503 || status === 502) {
+      return {
+        type: 'server',
+        message: '数据服务暂时不可用，请稍后重试',
+        retryable: true,
+      };
+    }
+    if (!error.response) {
+      return {
+        type: 'network',
+        message: '网络连接失败，请检查网络后重试',
+        retryable: true,
+      };
+    }
+  }
+  return {
+    type: 'unknown',
+    message: '获取数据失败，请稍后重试',
+    retryable: true,
+  };
+};
 
 type PeriodType = 'daily' | 'weekly' | 'monthly';
 
@@ -40,12 +80,14 @@ const StockDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<PeriodType>('daily');
   const [stockData, setStockData] = useState<StockHistoryResponse | null>(null);
+  const [stockError, setStockError] = useState<DataError | null>(null);
   const [financialData, setFinancialData] = useState<FinancialIndicatorResponse | null>(null);
   const [valuationData, setValuationData] = useState<ValuationResponse | null>(null);
   const [financialLoading, setFinancialLoading] = useState(false);
+  const [financialError, setFinancialError] = useState<DataError | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  const fetchStockData = useCallback(async () => {
     if (!code) return;
 
     if (abortControllerRef.current) {
@@ -53,52 +95,55 @@ const StockDetail: React.FC = () => {
     }
     abortControllerRef.current = new AbortController();
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await stockApi.getStockHistory(code, { period }, {
-          signal: abortControllerRef.current?.signal,
-        });
-        setStockData(response.data);
-      } catch (error) {
-        if (!axios.isCancel(error)) {
-          message.error('获取股票数据失败');
-        }
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setStockError(null);
+    try {
+      const response = await stockApi.getStockHistory(code, { period }, {
+        signal: abortControllerRef.current?.signal,
+      });
+      setStockData(response.data);
+    } catch (error) {
+      if (!axios.isCancel(error)) {
+        setStockError(parseError(error));
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [code, period]);
 
-    fetchData();
+  const fetchFinancialData = useCallback(async () => {
+    if (!code) return;
 
+    setFinancialLoading(true);
+    setFinancialError(null);
+    try {
+      const [financialRes, valuationRes] = await Promise.all([
+        stockApi.getFinancialIndicators(code, 8),
+        stockApi.getValuation(code, 30),
+      ]);
+      setFinancialData(financialRes.data);
+      setValuationData(valuationRes.data);
+    } catch (error) {
+      if (!axios.isCancel(error)) {
+        setFinancialError(parseError(error));
+      }
+    } finally {
+      setFinancialLoading(false);
+    }
+  }, [code]);
+
+  useEffect(() => {
+    fetchStockData();
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [code, period]);
+  }, [fetchStockData]);
 
   useEffect(() => {
-    if (!code) return;
-
-    const fetchFinancialData = async () => {
-      setFinancialLoading(true);
-      try {
-        const [financialRes, valuationRes] = await Promise.all([
-          stockApi.getFinancialIndicators(code, 8),
-          stockApi.getValuation(code, 30),
-        ]);
-        setFinancialData(financialRes.data);
-        setValuationData(valuationRes.data);
-      } catch {
-        // 财务数据获取失败不显示错误，静默处理
-      } finally {
-        setFinancialLoading(false);
-      }
-    };
-
     fetchFinancialData();
-  }, [code]);
+  }, [fetchFinancialData]);
 
   const chartOption = useMemo(() => {
     if (!stockData?.items?.length) return {};
@@ -289,19 +334,46 @@ const StockDetail: React.FC = () => {
               children: (
                 <Card
                   extra={
-                    <Segmented
-                      options={periodOptions}
-                      value={period}
-                      onChange={(value) => setPeriod(value as PeriodType)}
-                    />
+                    <Space>
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={fetchStockData}
+                        loading={loading}
+                        size="small"
+                      >
+                        刷新
+                      </Button>
+                      <Segmented
+                        options={periodOptions}
+                        value={period}
+                        onChange={(value) => setPeriod(value as PeriodType)}
+                      />
+                    </Space>
                   }
                 >
-                  {stockData?.items?.length ? (
+                  {stockError ? (
+                    <Result
+                      status="warning"
+                      icon={<ExclamationCircleOutlined style={{ color: stockError.type === 'rate_limit' ? '#faad14' : '#ff4d4f' }} />}
+                      title={stockError.type === 'rate_limit' ? '请求频率限制' : '数据加载失败'}
+                      subTitle={stockError.message}
+                      extra={
+                        stockError.retryable && (
+                          <Button type="primary" icon={<ReloadOutlined />} onClick={fetchStockData} loading={loading}>
+                            重新加载
+                          </Button>
+                        )
+                      }
+                    />
+                  ) : stockData?.items?.length ? (
                     <ReactECharts option={chartOption} style={{ height: 500 }} />
                   ) : (
                     <div style={{ height: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
                       <div style={{ fontSize: 16, marginBottom: 8 }}>暂无数据</div>
                       <div style={{ fontSize: 12 }}>数据源可能暂时不可用，请稍后重试</div>
+                      <Button type="link" icon={<ReloadOutlined />} onClick={fetchStockData} style={{ marginTop: 8 }}>
+                        点击重试
+                      </Button>
                     </div>
                   )}
                 </Card>
@@ -312,8 +384,35 @@ const StockDetail: React.FC = () => {
               label: '估值指标',
               children: (
                 <Spin spinning={financialLoading}>
-                  <Card>
-                    {latestValuation ? (
+                  <Card
+                    extra={
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={fetchFinancialData}
+                        loading={financialLoading}
+                        size="small"
+                      >
+                        刷新
+                      </Button>
+                    }
+                  >
+                    {financialError ? (
+                      <Alert
+                        type={financialError.type === 'rate_limit' ? 'warning' : 'error'}
+                        showIcon
+                        message={financialError.type === 'rate_limit' ? '请求频率限制' : '数据加载失败'}
+                        description={
+                          <Space direction="vertical">
+                            <Text type="secondary">{financialError.message}</Text>
+                            {financialError.retryable && (
+                              <Button size="small" icon={<ReloadOutlined />} onClick={fetchFinancialData}>
+                                重新加载
+                              </Button>
+                            )}
+                          </Space>
+                        }
+                      />
+                    ) : latestValuation ? (
                       <Row gutter={[16, 16]}>
                         <Col xs={12} sm={8} md={6}>
                           <Statistic title="市盈率(PE)" value={formatNumber(latestValuation.pe)} />
@@ -342,7 +441,10 @@ const StockDetail: React.FC = () => {
                       </Row>
                     ) : (
                       <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>
-                        暂无估值数据
+                        <div>暂无估值数据</div>
+                        <Button type="link" icon={<ReloadOutlined />} onClick={fetchFinancialData} style={{ marginTop: 8 }}>
+                          点击重试
+                        </Button>
                       </div>
                     )}
                   </Card>
@@ -354,36 +456,70 @@ const StockDetail: React.FC = () => {
               label: '财务指标',
               children: (
                 <Spin spinning={financialLoading}>
-                  <Card>
-                    {latestFinancial && (
-                      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                        <Col xs={12} sm={8} md={6}>
-                          <Statistic title="每股收益(EPS)" value={formatNumber(latestFinancial.eps)} />
-                        </Col>
-                        <Col xs={12} sm={8} md={6}>
-                          <Statistic title="每股净资产(BPS)" value={formatNumber(latestFinancial.bps)} />
-                        </Col>
-                        <Col xs={12} sm={8} md={6}>
-                          <Statistic title="净资产收益率(ROE)" value={formatPercent(latestFinancial.roe)} />
-                        </Col>
-                        <Col xs={12} sm={8} md={6}>
-                          <Statistic title="总资产收益率(ROA)" value={formatPercent(latestFinancial.roa)} />
-                        </Col>
-                      </Row>
-                    )}
-                    {financialData?.items?.length ? (
-                      <Table
-                        dataSource={financialData.items}
-                        columns={financialColumns}
-                        rowKey="date"
-                        pagination={false}
+                  <Card
+                    extra={
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={fetchFinancialData}
+                        loading={financialLoading}
                         size="small"
-                        scroll={{ x: 800 }}
+                      >
+                        刷新
+                      </Button>
+                    }
+                  >
+                    {financialError ? (
+                      <Alert
+                        type={financialError.type === 'rate_limit' ? 'warning' : 'error'}
+                        showIcon
+                        message={financialError.type === 'rate_limit' ? '请求频率限制' : '数据加载失败'}
+                        description={
+                          <Space direction="vertical">
+                            <Text type="secondary">{financialError.message}</Text>
+                            {financialError.retryable && (
+                              <Button size="small" icon={<ReloadOutlined />} onClick={fetchFinancialData}>
+                                重新加载
+                              </Button>
+                            )}
+                          </Space>
+                        }
                       />
                     ) : (
-                      <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>
-                        暂无财务数据
-                      </div>
+                      <>
+                        {latestFinancial && (
+                          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                            <Col xs={12} sm={8} md={6}>
+                              <Statistic title="每股收益(EPS)" value={formatNumber(latestFinancial.eps)} />
+                            </Col>
+                            <Col xs={12} sm={8} md={6}>
+                              <Statistic title="每股净资产(BPS)" value={formatNumber(latestFinancial.bps)} />
+                            </Col>
+                            <Col xs={12} sm={8} md={6}>
+                              <Statistic title="净资产收益率(ROE)" value={formatPercent(latestFinancial.roe)} />
+                            </Col>
+                            <Col xs={12} sm={8} md={6}>
+                              <Statistic title="总资产收益率(ROA)" value={formatPercent(latestFinancial.roa)} />
+                            </Col>
+                          </Row>
+                        )}
+                        {financialData?.items?.length ? (
+                          <Table
+                            dataSource={financialData.items}
+                            columns={financialColumns}
+                            rowKey="date"
+                            pagination={false}
+                            size="small"
+                            scroll={{ x: 800 }}
+                          />
+                        ) : (
+                          <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>
+                            <div>暂无财务数据</div>
+                            <Button type="link" icon={<ReloadOutlined />} onClick={fetchFinancialData} style={{ marginTop: 8 }}>
+                              点击重试
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </Card>
                 </Spin>
