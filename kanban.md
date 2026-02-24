@@ -2,33 +2,92 @@
 
 ## 🏃 当前 Sprint
 
-**Sprint ID**: 无
-**状态**: ⏸️ 暂停中
+**Sprint ID**: Sprint 13
+**标题**: 技术债务清理与体验优化
+**状态**: 🔄 进行中
+**里程碑**: M2.0 - 沙盒系统 (质量与体验)
+**目标**: 清理技术债务，优化用户体验，提升系统稳定性
+**启动日期**: 2026-02-24
 
-> 💡 Sprint 11 因 AKShare 限流暂停，等待限流解除后恢复。
+### 任务列表
+
+#### TASK-1: 里程碑对齐与方向校准 (P0) ✅
+
+**说明**: Sprint 启动检查，确认目标与里程碑对齐
+
+**依赖**: 无
+
+**子任务**:
+- [x] 里程碑对齐与方向校准 ✅
+- [x] Sprint 启动检查 ✅
+- [ ] 团队任务分配确认
+
+**交付产物**: {任务完成后补充}
 
 ---
 
-### ⏸️ Sprint 11: 股票池管理与数据缓存 (暂停)
+#### TASK-2: API Rate Limiting (P1)
 
-**状态**: ⏸️ 暂停 (因 AKShare 限流无法完成缓存预加载测试)
-**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
-**目标**: 实现股票池管理功能，建立数据缓存机制
-**启动日期**: 2026-02-24
+**说明**: 实现 API 请求频率限制，防止滥用和保护后端服务
 
-**已完成任务**:
-- ✅ TASK-1: 股票池管理 (P0) - 后端 API + 前端页面完成
-- 🔄 TASK-2: 数据缓存方案 (P1) - 核心功能完成，预加载因限流暂停
+**依赖**: 无
 
-**待恢复条件**: AKShare 限流解除后继续预加载测试
+**子任务**:
+- [ ] 选择 Rate Limiting 方案 (slowapi/自定义)
+- [ ] 实现全局 Rate Limiter 中间件
+- [ ] 配置不同端点的限流策略
+| 特性         | 描述               | 优先级 |
+| ------------ | ------------------ | ------ |
+| 定时执行     | 每日自动执行策略   | P0     |
+| 策略组合     | 多策略组合管理     | P1     |
+| 净值曲线图表 | 可视化净值走势     | P1     |
+| 毕业机制     | 策略达标后推荐实盘 | P2     |
 
-**交付产物**:
-- `backend/app/models/stock_pool.py` - StockPool, StockPoolItem 数据模型
-- `backend/app/services/cache_service.py` - CacheService (Parquet 持久化)
-- `backend/app/scripts/cache_loader.py` - 预加载脚本
-- `frontend/src/components/StockPoolTab.tsx` - 股票池管理组件
-- `backend/tests/test_stock_pool.py` - 9 个测试
-- `backend/tests/test_cache.py` - 4 个测试
+#### TASK-3: Token 存储优化 (P1)
+
+| 描述                | 模块     | 优先级 | 状态     |
+| ------------------- | -------- | ------ | -------- |
+| 修改密码功能        | 用户系统 | P2     | 待处理   |
+| 部署删除前端入口    | 沙盒系统 | P1     | 待处理   |
+| 账户出金功能        | 沙盒系统 | P2     | 待处理   |
+| 策略参数界面编辑    | 策略系统 | P1     | 待处理   |
+| 策略状态转换 API    | 策略系统 | P2     | 待处理   |
+| 回测取消功能        | 回测系统 | P1     | 待处理   |
+| 因子值单条更新/删除 | 因子系统 | P2     | 待处理   |
+| 因子评估历史展示    | 因子系统 | P2     | 待处理   |
+| 用户资源权限验证    | 全局安全 | P0     | ✅ 已完成 |
+
+---
+
+| 描述             | 模块     | 优先级 | 状态     |
+| ---------------- | -------- | ------ | -------- |
+| 财务数据获取调研 | 数据服务 | P1     | ✅ 已完成 |
+
+**依赖**: 无
+
+| 描述                   | 优先级 | 来源            | 状态     |
+| ---------------------- | ------ | --------------- | -------- |
+| Redis 缓存替换内存缓存 | P2     | Sprint 2.1 评估 | 待处理   |
+| API Rate Limiting      | P2     | Sprint 2.1 评估 | 待处理   |
+| Token 存储优化         | P2     | Sprint 2.1 评估 | 待处理   |
+| 环境变量验证           | P2     | Sprint 2.1 评估 | 待处理   |
+| 新手引导功能           | P2     | Sprint 5 延期   | 待处理   |
+| 沙盒测试环境配置       | P1     | Sprint 6        | ✅ 已修复 |
+---
+
+#### TASK-5: 环境变量验证 (P2)
+
+**说明**: 启动时验证必要的环境变量，避免运行时错误
+| 里程碑 | 状态     | 核心交付                         | 成功指标             |
+| ------ | -------- | -------------------------------- | -------------------- |
+| M0     | ✅ 完成   | 产品愿景、技术架构、开发规范     | 文档完整度 100%      |
+| M1.0   | ✅ 完成   | 因子管理、策略回测、基础数据     | 首次回测完成率 > 60% |
+| M2.0   | 🔄 进行中 | 沙盒系统 - 虚拟账户、多策略对比  | 沙盒使用率 > 40%     |
+| M3.0   | ⚪ 待开始 | 交易执行 - 模拟交易、券商对接    | 订单执行成功率 > 99% |
+| M4.0   | ⚪ 待开始 | 智能升级 - AI 因子推荐、策略助手 | 用户满意度 NPS > 50  |
+- [ ] 更新文档
+
+**交付产物**: {任务完成后补充}
 
 ---
 
@@ -62,17 +121,19 @@
 | 描述             | 模块     | 优先级 | 状态     |
 | ---------------- | -------- | ------ | -------- |
 | 财务数据获取调研 | 数据服务 | P1     | ✅ 已完成 |
+| 股票池管理       | 数据服务 | P0     | ✅ 已完成 |
+| 数据缓存方案     | 数据服务 | P1     | ⏸️ 暂停   |
 
 ### 技术债务 (Tech Debt)
 
-| 描述                   | 优先级 | 来源            | 状态     |
-| ---------------------- | ------ | --------------- | -------- |
-| Redis 缓存替换内存缓存 | P2     | Sprint 2.1 评估 | 待处理   |
-| API Rate Limiting      | P2     | Sprint 2.1 评估 | 待处理   |
-| Token 存储优化         | P2     | Sprint 2.1 评估 | 待处理   |
-| 环境变量验证           | P2     | Sprint 2.1 评估 | 待处理   |
-| 新手引导功能           | P2     | Sprint 5 延期   | 待处理   |
-| 沙盒测试环境配置       | P1     | Sprint 6        | ✅ 已修复 |
+| 描述                   | 优先级 | 来源            | 状态        |
+| ---------------------- | ------ | --------------- | ----------- |
+| Redis 缓存替换内存缓存 | P2     | Sprint 2.1 评估 | 待处理      |
+| API Rate Limiting      | P2     | Sprint 2.1 评估 | 🔄 Sprint 13 |
+| Token 存储优化         | P2     | Sprint 2.1 评估 | 🔄 Sprint 13 |
+| 环境变量验证           | P2     | Sprint 2.1 评估 | 🔄 Sprint 13 |
+| 新手引导功能           | P2     | Sprint 5 延期   | 待处理      |
+| 沙盒测试环境配置       | P1     | Sprint 6        | ✅ 已修复    |
 
 ---
 
@@ -89,6 +150,19 @@
 ---
 
 ## 📜 历史 Sprints
+
+### ⏸️ Sprint 11: 股票池管理与数据缓存 (暂停)
+**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
+**目标**: 实现股票池管理功能，建立数据缓存机制
+**执行日期**: 2026-02-24 (暂停)
+
+**关键交付物**:
+- ✅ 股票池管理: 后端 API + 前端页面
+- ⏸️ 数据缓存: 核心功能完成，预加载因限流暂停
+
+**暂停原因**: AKShare 限流，待恢复后继续
+
+---
 
 ### ✅ Sprint 12: 易用性问题修复 (已完成)
 **里程碑**: M2.0 - 沙盒系统 (用户体验)
@@ -205,39 +279,39 @@
 - ✅ 回测集成: 回测执行 API + 前端回测配置/结果展示
 - ✅ 因子功能: 因子计算和评估功能已集成
 - ✅ API 文档: `docs/api-reference.md`
-- ✅ 测试: 50 个后端测试全部通过
-
-**完工验收**: ✅ 已完成 (6/6 任务, 100%)
-
----
-
-### ✅ Sprint 4: 策略模块 (已完成)
+| 文档       | 路径                                  | 说明               |
+| ---------- | ------------------------------------- | ------------------ |
+| 产品愿景   | `docs/product/vision.md`              | 产品定位与核心价值 |
+| 用户故事   | `docs/product/user_stories.md`        | 用户需求与场景     |
+| 里程碑规划 | `docs/product/milestones.md`          | 版本规划与交付节点 |
+| 产品待办   | `docs/product/backlog.md`             | 功能待办列表       |
+| 竞品分析   | `docs/product/competitor_analysis.md` | 竞品调研与分析     |
 **里程碑**: M1.0 - MVP 发布 (Phase 3/4)
 **目标**: 实现策略的完整生命周期管理，包括 CRUD、回测引擎和绩效评估
 **执行日期**: 2026-02-23
-**总结文档**: `docs/sprints/sprint-4-summary.md`
-
-**关键交付物**:
-- ✅ 后端: Strategy/Backtest/BacktestResult 数据模型 + CRUD API + 回测引擎 + 绩效评估
-- ✅ 前端: 策略列表页面 + 策略详情页面
-- ✅ 内置策略: 5 个示例策略 (双均线、动量、均值回归、布林带、RSI)
-- ✅ 测试: 15 个策略 API 测试用例
-
-**完工验收**: ✅ 已完成 (7/7 任务, 100%)
-
----
-
-### ✅ Sprint 3: 因子模块 (已完成)
-**里程碑**: M1.0 - MVP 发布 (Phase 2/4)
-**目标**: 实现因子的完整生命周期管理
-**执行日期**: 2026-02-23
-**总结文档**: `docs/sprints/sprint-3-summary.md`
-
-**关键交付物**:
-- ✅ 后端: Factor 数据模型 + CRUD API + 计算引擎 + 评估服务
-- ✅ 前端: 因子列表页面 + 因子详情页面 (含图表)
-- ✅ 测试: 12 个因子 API 测试用例
-- ✅ 技术债务修复: Pydantic ConfigDict 迁移、passlib crypt 废弃警告
+| 文档       | 路径                            | 说明                 |
+| ---------- | ------------------------------- | -------------------- |
+| 技术架构   | `docs/tech/architecture.md`     | 系统架构设计         |
+| 数据模型   | `docs/tech/data_model.md`       | 数据库设计与模型定义 |
+| API 参考   | `docs/api-reference.md`         | API 接口文档         |
+| 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
+| CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
+| 文档       | 路径                            |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |crypt 废弃警告
 
 **完工验收**: ✅ 已完成 (7/7 任务, 100%)
 
@@ -282,14 +356,14 @@
 | 文档       | 路径                                  | 说明               |
 | ---------- | ------------------------------------- | ------------------ |
 | 产品愿景   | `docs/product/vision.md`              | 产品定位与核心价值 |
-| 用户故事   | `docs/product/user_stories.md`        | 用户需求与场景     |
-| 里程碑规划 | `docs/product/milestones.md`          | 版本规划与交付节点 |
-| 产品待办   | `docs/product/backlog.md`             | 功能待办列表       |
-| 竞品分析   | `docs/product/competitor_analysis.md` | 竞品调研与分析     |
-
-### 技术文档
-
-| 文档       | 路径                            | 说明                 |
+| 文档       | 路径                           |
+| ---------- | ------------------------------ |
+| 产品愿景   | `docs/product/vision.md`       |
+| 用户故事   | `docs/product/user_stories.md` |
+| 里程碑规划 | `docs/product/milestones.md`   |
+| 技术架构   | `docs/tech/architecture.md`    |
+| API 参考   | `docs/api-reference.md`        |
+| 数据模型   | `docs/tech/data_model.md`      || 说明                 |
 | ---------- | ------------------------------- | -------------------- |
 | 技术架构   | `docs/tech/architecture.md`     | 系统架构设计         |
 | 数据模型   | `docs/tech/data_model.md`       | 数据库设计与模型定义 |
@@ -297,18 +371,3 @@
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
 | 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
-| 文档       | 路径                            |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
-| ---------- | ------------------------------ |
-| 产品愿景   | `docs/product/vision.md`       |
-| 用户故事   | `docs/product/user_stories.md` |
-| 里程碑规划 | `docs/product/milestones.md`   |
-| 技术架构   | `docs/tech/architecture.md`    |
-| API 参考   | `docs/api-reference.md`        |
-| 数据模型   | `docs/tech/data_model.md`      |
