@@ -197,16 +197,6 @@ const StockListTab: React.FC = () => {
 const Stocks: React.FC = () => {
   const tabItems = [
     {
-      key: 'list',
-      label: (
-        <span>
-          <UnorderedListOutlined />
-          股票列表
-        </span>
-      ),
-      children: <StockListTab />,
-    },
-    {
       key: 'pools',
       label: (
         <span>
@@ -216,12 +206,22 @@ const Stocks: React.FC = () => {
       ),
       children: <StockPoolTab />,
     },
+    {
+      key: 'list',
+      label: (
+        <span>
+          <UnorderedListOutlined />
+          股票列表
+        </span>
+      ),
+      children: <StockListTab />,
+    },
   ];
 
   return (
     <div>
-      <Title level={3}>股票</Title>
-      <Tabs defaultActiveKey="list" items={tabItems} />
+      <Title level={3}>数据中心</Title>
+      <Tabs defaultActiveKey="pools" items={tabItems} />
     </div>
   );
 };
