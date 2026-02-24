@@ -1,0 +1,150 @@
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_db
+from app.schemas.sandbox import (
+    DepositRequest,
+    ResetAccountRequest,
+    SandboxAccountCreate,
+    SandboxAccountDetailResponse,
+    SandboxAccountListResponse,
+    SandboxAccountResponse,
+    SandboxAccountUpdate,
+    SandboxDeploymentCreate,
+    SandboxDeploymentResponse,
+    SandboxTransactionResponse,
+    StrategyCompareRequest,
+    StrategyCompareResponse,
+    RunDeploymentRequest,
+)
+from app.services.sandbox_service import SandboxService
+
+router = APIRouter()
+
+DEFAULT_USER_ID = 1
+
+
+@router.get("/accounts", response_model=SandboxAccountListResponse)
+async def get_accounts(
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.list_accounts(DEFAULT_USER_ID, page, size)
+
+
+@router.post("/accounts", response_model=SandboxAccountResponse, status_code=status.HTTP_201_CREATED)
+async def create_account(
+    account_data: SandboxAccountCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.create_account(DEFAULT_USER_ID, account_data)
+
+
+@router.get("/accounts/{account_id}", response_model=SandboxAccountDetailResponse)
+async def get_account(
+    account_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.get_account_detail(account_id)
+
+
+@router.put("/accounts/{account_id}", response_model=SandboxAccountResponse)
+async def update_account(
+    account_id: int,
+    account_data: SandboxAccountUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.update_account(account_id, account_data)
+
+
+@router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    account_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    await service.delete_account(account_id)
+
+
+@router.post("/accounts/{account_id}/deposit", response_model=SandboxAccountResponse)
+async def deposit(
+    account_id: int,
+    deposit_data: DepositRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.deposit(account_id, deposit_data)
+
+
+@router.post("/accounts/{account_id}/reset", response_model=SandboxAccountResponse)
+async def reset_account(
+    account_id: int,
+    reset_data: ResetAccountRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.reset_account(account_id, reset_data)
+
+
+@router.post("/accounts/{account_id}/deployments", response_model=SandboxDeploymentResponse, status_code=status.HTTP_201_CREATED)
+async def create_deployment(
+    account_id: int,
+    deployment_data: SandboxDeploymentCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.create_deployment(account_id, deployment_data)
+
+
+@router.get("/deployments/{deployment_id}", response_model=SandboxDeploymentResponse)
+async def get_deployment(
+    deployment_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.get_deployment(deployment_id)
+
+
+@router.post("/deployments/{deployment_id}/run", response_model=SandboxDeploymentResponse)
+async def run_deployment(
+    deployment_id: int,
+    run_data: Optional[RunDeploymentRequest] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    run_date = run_data.run_date if run_data else None
+    return await service.run_deployment(deployment_id, run_date)
+
+
+@router.post("/deployments/{deployment_id}/stop", response_model=SandboxDeploymentResponse)
+async def stop_deployment(
+    deployment_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.stop_deployment(deployment_id)
+
+
+@router.delete("/deployments/{deployment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_deployment(
+    deployment_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    await service.delete_deployment(deployment_id)
+
+
+@router.post("/compare", response_model=StrategyCompareResponse)
+async def compare_strategies(
+    compare_data: StrategyCompareRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    service = SandboxService(db)
+    return await service.compare_strategies(compare_data)
