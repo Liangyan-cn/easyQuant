@@ -18,9 +18,11 @@ import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { stockPoolApi } from '@/api/stockPool';
 import type {
   StockPool,
@@ -29,10 +31,12 @@ import type {
   StockPoolCreate,
   StockPoolUpdate,
   StockPoolItemCreate,
+  StockPoolItem,
 } from '@/types/stockPool';
 import { POOL_TYPE_LABELS } from '@/types/stockPool';
 
 const StockPoolTab: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [pools, setPools] = useState<StockPool[]>([]);
   const [total, setTotal] = useState(0);
@@ -49,6 +53,7 @@ const StockPoolTab: React.FC = () => {
   const [selectedPool, setSelectedPool] = useState<StockPoolDetail | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [addStockForm] = Form.useForm();
+  const [stockSearchKeyword, setStockSearchKeyword] = useState('');
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -138,6 +143,7 @@ const StockPoolTab: React.FC = () => {
   const handleViewDetail = async (pool: StockPool) => {
     setDrawerVisible(true);
     setDrawerLoading(true);
+    setStockSearchKeyword('');
     try {
       const response = await stockPoolApi.getPool(pool.id);
       setSelectedPool(response.data);
@@ -179,6 +185,19 @@ const StockPoolTab: React.FC = () => {
       message.error('删除失败');
     }
   };
+
+  const handleStockClick = (stockCode: string) => {
+    navigate(`/stocks/${stockCode}`);
+  };
+
+  const filteredStocks = selectedPool?.items.filter((item: StockPoolItem) => {
+    if (!stockSearchKeyword) return true;
+    const keyword = stockSearchKeyword.toLowerCase();
+    return (
+      item.stock_code.toLowerCase().includes(keyword) ||
+      (item.stock_name && item.stock_name.toLowerCase().includes(keyword))
+    );
+  }) || [];
 
   const columns: ColumnsType<StockPool> = [
     {
@@ -353,30 +372,62 @@ const StockPoolTab: React.FC = () => {
               </Form>
             )}
 
-            {selectedPool.items.length > 0 ? (
+            <Input.Search
+              placeholder="搜索股票代码或名称"
+              allowClear
+              value={stockSearchKeyword}
+              onChange={(e) => setStockSearchKeyword(e.target.value)}
+              style={{ marginBottom: 16 }}
+            />
+
+            {filteredStocks.length > 0 ? (
               <List
                 size="small"
                 bordered
-                dataSource={selectedPool.items}
-                renderItem={(item) => (
+                dataSource={filteredStocks}
+                renderItem={(item: StockPoolItem) => (
                   <List.Item
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleStockClick(item.stock_code)}
                     actions={
                       selectedPool.pool_type === 'user'
                         ? [
                             <Popconfirm
                               key="delete"
                               title="确定删除此股票？"
-                              onConfirm={() => handleRemoveStock(item.stock_code)}
+                              onConfirm={(e) => {
+                                e?.stopPropagation();
+                                handleRemoveStock(item.stock_code);
+                              }}
+                              onCancel={(e) => e?.stopPropagation()}
                             >
-                              <Button type="link" size="small" danger>
+                              <Button
+                                type="link"
+                                size="small"
+                                danger
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 删除
                               </Button>
                             </Popconfirm>,
+                            <RightOutlined
+                              key="go"
+                              style={{ color: '#999' }}
+                              onClick={() => handleStockClick(item.stock_code)}
+                            />,
                           ]
-                        : undefined
+                        : [
+                            <RightOutlined
+                              key="go"
+                              style={{ color: '#999' }}
+                              onClick={() => handleStockClick(item.stock_code)}
+                            />,
+                          ]
                     }
                   >
-                    <span style={{ fontWeight: 500 }}>{item.stock_code}</span>
+                    <span style={{ fontWeight: 500, color: '#1890ff' }}>
+                      {item.stock_code}
+                    </span>
                     <span style={{ marginLeft: 8, color: '#666' }}>
                       {item.stock_name || '-'}
                     </span>
@@ -384,7 +435,7 @@ const StockPoolTab: React.FC = () => {
                 )}
               />
             ) : (
-              <Empty description="暂无股票" />
+              <Empty description={stockSearchKeyword ? '未找到匹配的股票' : '暂无股票'} />
             )}
           </>
         ) : null}

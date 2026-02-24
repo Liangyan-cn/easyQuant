@@ -2,7 +2,6 @@ import { Layout, Menu, theme, Dropdown, Avatar, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
-  SettingOutlined,
   UserOutlined,
   StockOutlined,
   ExperimentOutlined,
@@ -40,16 +39,6 @@ const menuItems = [
     key: '/sandbox',
     icon: <CloudServerOutlined />,
     label: '沙盒交易',
-  },
-  {
-    key: '/settings',
-    icon: <SettingOutlined />,
-    label: '设置',
-  },
-  {
-    key: '/profile',
-    icon: <UserOutlined />,
-    label: '个人中心',
   },
 ];
 
