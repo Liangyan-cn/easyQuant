@@ -2,130 +2,77 @@
 
 ## 🏃 当前 Sprint
 
-**Sprint ID**: Sprint 12
-**标题**: 易用性问题修复 (基于人工评估)
-**状态**: 🔄 进行中
-**里程碑**: M2.0 - 沙盒系统 (用户体验)
-**目标**: 修复人工评估发现的 15 个易用性问题，提升小白用户体验
+**Sprint ID**: Sprint 11
+**标题**: 股票池管理与数据缓存
+**状态**: 🔄 进行中 (从暂停恢复)
+**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
+**目标**: 实现股票池管理功能，建立数据缓存机制
 **启动日期**: 2026-02-24
-**问题来源**: `docs/ux/usability-issues.md`
+**恢复日期**: 2026-02-24
 
 ### 强制任务
 - [x] 里程碑对齐与方向校准
 - [x] Sprint 启动检查
-- [x] 功能梳理与易用性评估 (TASK-0)
+- [x] 团队任务分配确认
 
 ### 任务列表
 
-#### TASK-0: 功能梳理与易用性评估 (P0) ✅
+#### TASK-1: 股票池管理 (P0) ✅
 
-**说明**: 逐一梳理系统各模块功能，评估小白用户使用体验，识别易用性问题
-
-**依赖**: 无
-
-**子任务**:
-- [x] 首页功能梳理
-- [x] 因子模块梳理
-- [x] 策略模块梳理
-- [x] 回测模块梳理
-- [x] 沙盒模块梳理
-- [x] 数据模块梳理
-- [x] 汇总易用性问题清单
-
-**交付产物**: 
-- `docs/ux/feature-review.md` - 功能梳理文档
-- `docs/ux/usability-issues.md` - 易用性问题清单 (15 个问题)
-
-#### TASK-1: 阻塞问题修复 (P0) ✅
-
-**说明**: 修复 5 个阻塞级别问题，确保核心功能可用
-
-**依赖**: TASK-0
-
-**子任务**:
-- [x] H1: 首页卡片添加点击跳转
-- [x] D2: 股票池详情股票列表添加跳转到股票详情
-- [x] D3: 股票池详情添加股票搜索功能
-- [x] G1: 移除 /settings 菜单入口
-- [x] G2: 移除 /profile 菜单入口
-
-**交付产物**:
-- `frontend/src/pages/Home.tsx` - 首页卡片点击跳转
-- `frontend/src/components/StockPoolTab.tsx` - 股票池搜索和跳转
-- `frontend/src/layouts/MainLayout.tsx` - 移除未实现菜单
-
-#### TASK-2: 首页重构 (P0) ✅
-
-**说明**: 重新设计首页，仅展示已支持的功能入口
-
-**依赖**: TASK-1
-
-**子任务**:
-- [x] 明确首页设计原则 (仅展示可用功能)
-- [x] 重新设计功能卡片 (5个功能模块)
-- [x] 移除或标记未实现功能 ("即将上线"标签)
-- [x] 添加快速入口导航 (4步引导)
-
-**交付产物**:
-- `frontend/src/pages/Home.tsx` - 重构首页，添加快速开始引导
-
-#### TASK-3: 内置因子/策略说明 (P1) ✅
-
-**说明**: 为内置因子和策略添加详细说明，解决用户困惑
+**说明**: 实现股票池的完整管理功能
 
 **依赖**: 无
 
 **子任务**:
-- [x] F1: 优化"初始化内置因子"按钮提示 (Tooltip + 空状态引导)
-- [x] F2: 为因子分析添加结果解读指南 (IC/IR 说明)
-- [x] S1: 简化策略状态设计 (移除状态筛选器)
-- [x] S2: 为内置策略添加详细描述 (策略类型说明)
+- [x] 后端 StockPool/StockPoolItem 数据模型
+- [x] 后端股票池 CRUD API
+- [x] 前端股票池列表和详情页面
+- [x] 系统股票池初始化 (沪深300/中证500)
 
 **交付产物**:
-- `frontend/src/pages/Factors.tsx` - 因子列表空状态引导
-- `frontend/src/pages/FactorDetail.tsx` - 因子分析结果解读
-- `frontend/src/pages/Strategies.tsx` - 策略列表空状态引导
-- `frontend/src/pages/StrategyDetail.tsx` - 策略类型说明
+| 产物     | 路径                                         | 说明                     |
+| -------- | -------------------------------------------- | ------------------------ |
+| 数据模型 | `backend/app/models/stock_pool.py`           | StockPool, StockPoolItem |
+| API      | `backend/app/api/v1/endpoints/stock_pool.py` | 股票池 CRUD              |
+| 前端组件 | `frontend/src/components/StockPoolTab.tsx`   | 股票池管理               |
+| 测试     | `backend/tests/test_stock_pool.py`           | 9 个测试用例             |
 
-#### TASK-4: 数据模块优化 (P1) ✅
+#### TASK-2: 数据缓存方案 (P1) 🔄
 
-**说明**: 优化股票池和股票列表的交互体验
+**说明**: 建立数据缓存机制，减少 AKShare API 调用
 
 **依赖**: TASK-1
 
 **子任务**:
-- [x] D1: 调整 Tab 顺序 (股票池 → 股票列表)
-- [ ] D4: 改造股票选择组件 (延期)
-- [ ] D5: 股票列表添加股票池筛选器 (延期)
+- [x] CacheService 核心实现 (Parquet 持久化)
+- [x] 缓存预加载脚本
+- [ ] 预加载测试验证 (因 AKShare 限流暂停)
+- [ ] 缓存失效策略优化
 
 **交付产物**:
-- `frontend/src/pages/Stocks.tsx` - Tab 顺序调整，重命名为"数据中心"
+| 产物       | 路径                                    | 说明           |
+| ---------- | --------------------------------------- | -------------- |
+| 缓存服务   | `backend/app/services/cache_service.py` | Parquet 持久化 |
+| 预加载脚本 | `backend/app/scripts/cache_loader.py`   | 批量预加载     |
+| 测试       | `backend/tests/test_cache.py`           | 4 个测试用例   |
+
+#### TASK-3: 预加载验证 (P1)
+
+**说明**: 验证缓存预加载功能是否正常工作
+
+**依赖**: TASK-2
+
+**子任务**:
+- [ ] 测试沪深300预加载
+- [ ] 测试中证500预加载
+- [ ] 验证缓存命中率
+- [ ] 性能基准测试
+
+**交付产物**: {任务完成后补充}
 
 ---
 
-### ⏸️ Sprint 11: 股票池管理与数据缓存 (暂停)
-
-**状态**: ⏸️ 暂停 (因 AKShare 限流无法完成缓存预加载测试)
-**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
-**目标**: 实现股票池管理功能，建立数据缓存机制
-**启动日期**: 2026-02-24
-
-**已完成任务**:
-- ✅ TASK-1: 股票池管理 (P0) - 后端 API 完成，前端待开发
-- ✅ TASK-2: 数据缓存方案 (P1) - 核心功能完成，预加载因限流暂停
-
-**待恢复条件**: AKShare 限流解除后继续预加载测试
-
-**交付产物**:
-- `backend/app/models/stock_pool.py` - StockPool, StockPoolItem 数据模型
-- `backend/app/services/cache_service.py` - CacheService (Parquet 持久化)
-- `backend/app/scripts/cache_loader.py` - 预加载脚本
-- `backend/tests/test_stock_pool.py` - 9 个测试
-- `backend/tests/test_cache.py` - 4 个测试
-
----
-
-## �� Backlog
+## 📦 Backlog
 
 ### M2.0 沙盒系统增强
 
@@ -182,6 +129,22 @@
 ---
 
 ## 📜 历史 Sprints
+
+### ✅ Sprint 12: 易用性问题修复 (已完成)
+**里程碑**: M2.0 - 沙盒系统 (用户体验)
+**目标**: 修复人工评估发现的 15 个易用性问题，提升小白用户体验
+**执行日期**: 2026-02-24
+**总结文档**: `docs/sprints/sprint-12-summary.md`
+
+**关键交付物**:
+- ✅ 首页重构: 快速开始引导 + 功能卡片跳转
+- ✅ 股票选择器: 模糊搜索 + 多选支持
+- ✅ 股票池筛选: 股票列表支持按股票池筛选
+- ✅ UX 优化: 因子/策略空状态引导和结果解读
+
+**完工验收**: ✅ 已完成 (5/5 任务, 100%)
+
+---
 
 ### ✅ Sprint 10: 功能完整性修复与财务数据调研 (已完成)
 **里程碑**: M2.0 - 沙盒系统 (功能完善)
@@ -373,49 +336,8 @@
 | API 参考   | `docs/api-reference.md`         | API 接口文档         |
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
-| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
+| 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |
