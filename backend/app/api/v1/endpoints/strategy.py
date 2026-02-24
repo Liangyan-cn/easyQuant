@@ -3,8 +3,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user, verify_resource_ownership
 from app.models.strategy import StrategyStatus, StrategyType
+from app.models.user import User
 from app.schemas.strategy import (
     BacktestCreate,
     BacktestDetailResponse,
@@ -35,9 +36,12 @@ async def get_strategies(
     status: Optional[StrategyStatus] = None,
     keyword: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
-    strategies, total = await service.get_strategies(page, size, strategy_type, status, keyword)
+    strategies, total = await service.get_strategies(
+        page, size, strategy_type, status, keyword, user_id=current_user.id
+    )
     return StrategyListResponse(
         items=[StrategyResponse.model_validate(s) for s in strategies],
         total=total,
@@ -53,11 +57,17 @@ async def get_strategy_types(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{strategy_id}", response_model=StrategyResponse)
-async def get_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
+async def get_strategy(
+    strategy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = StrategyService(db)
     strategy = await service.get_strategy(strategy_id)
     if not strategy:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    if not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
     return StrategyResponse.model_validate(strategy)
 
 
@@ -65,10 +75,11 @@ async def get_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
 async def create_strategy(
     strategy_data: StrategyCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
     try:
-        strategy = await service.create_strategy(strategy_data)
+        strategy = await service.create_strategy(strategy_data, user_id=current_user.id)
         return StrategyResponse.model_validate(strategy)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -79,33 +90,46 @@ async def update_strategy(
     strategy_id: int,
     strategy_data: StrategyUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
+    existing_strategy = await service.get_strategy(strategy_id)
+    if not existing_strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    verify_resource_ownership(existing_strategy, current_user, "Strategy")
     try:
         strategy = await service.update_strategy(strategy_id, strategy_data)
-        if not strategy:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
         return StrategyResponse.model_validate(strategy)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_strategy(
+    strategy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = StrategyService(db)
+    existing_strategy = await service.get_strategy(strategy_id)
+    if not existing_strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    verify_resource_ownership(existing_strategy, current_user, "Strategy")
     try:
-        deleted = await service.delete_strategy(strategy_id)
-        if not deleted:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+        await service.delete_strategy(strategy_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/{strategy_id}/clone", response_model=StrategyResponse, status_code=status.HTTP_201_CREATED)
-async def clone_strategy(strategy_id: int, db: AsyncSession = Depends(get_db)):
+async def clone_strategy(
+    strategy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = StrategyService(db)
     try:
-        cloned = await service.clone_strategy(strategy_id)
+        cloned = await service.clone_strategy(strategy_id, user_id=current_user.id)
         return StrategyResponse.model_validate(cloned)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -116,11 +140,14 @@ async def get_strategy_backtests(
     strategy_id: int,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
     strategy = await service.get_strategy(strategy_id)
     if not strategy:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    if not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
 
     backtests = await service.get_backtests_by_strategy(strategy_id, limit)
     return BacktestListResponse(
@@ -133,8 +160,14 @@ async def get_strategy_backtests(
 async def create_backtest(
     backtest_data: BacktestCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
+    strategy = await service.get_strategy(backtest_data.strategy_id)
+    if not strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    if not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
     try:
         backtest = await service.create_backtest(backtest_data)
         return BacktestResponse.model_validate(backtest)
@@ -143,11 +176,19 @@ async def create_backtest(
 
 
 @router.get("/backtests/{backtest_id}", response_model=BacktestDetailResponse)
-async def get_backtest(backtest_id: int, db: AsyncSession = Depends(get_db)):
+async def get_backtest(
+    backtest_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = StrategyService(db)
     backtest = await service.get_backtest(backtest_id)
     if not backtest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backtest not found")
+    
+    strategy = await service.get_strategy(backtest.strategy_id)
+    if strategy and not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
 
     result = backtest.result
     equity_curve = None
@@ -162,11 +203,21 @@ async def get_backtest(backtest_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/backtests/{backtest_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_backtest(backtest_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_backtest(
+    backtest_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = StrategyService(db)
-    deleted = await service.delete_backtest(backtest_id)
-    if not deleted:
+    backtest = await service.get_backtest(backtest_id)
+    if not backtest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backtest not found")
+    
+    strategy = await service.get_strategy(backtest.strategy_id)
+    if strategy and not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
+    
+    await service.delete_backtest(backtest_id)
 
 
 @router.get("/backtests/{backtest_id}/orders", response_model=OrderListResponse)
@@ -175,11 +226,16 @@ async def get_backtest_orders(
     page: int = Query(1, ge=1),
     size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
     backtest = await service.get_backtest(backtest_id)
     if not backtest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backtest not found")
+    
+    strategy = await service.get_strategy(backtest.strategy_id)
+    if strategy and not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
 
     orders, total = await service.get_backtest_orders(backtest_id, page, size)
     return OrderListResponse(
@@ -192,11 +248,16 @@ async def get_backtest_orders(
 async def get_backtest_positions(
     backtest_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
     backtest = await service.get_backtest(backtest_id)
     if not backtest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backtest not found")
+    
+    strategy = await service.get_strategy(backtest.strategy_id)
+    if strategy and not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
 
     positions = await service.get_backtest_positions(backtest_id)
     return PositionListResponse(
@@ -209,11 +270,18 @@ async def get_backtest_positions(
 async def run_backtest(
     backtest_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = StrategyService(db)
     backtest = await service.get_backtest(backtest_id)
     if not backtest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backtest not found")
+
+    strategy = await service.get_strategy(backtest.strategy_id)
+    if not strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    if not strategy.is_builtin:
+        verify_resource_ownership(strategy, current_user, "Strategy")
 
     if backtest.status == BacktestStatus.RUNNING:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Backtest is already running")
@@ -225,10 +293,6 @@ async def run_backtest(
         from app.repositories.strategy_repo import BacktestResultRepository
         result_repo = BacktestResultRepository(db)
         await result_repo.delete_by_backtest_id(backtest_id)
-
-    strategy = await service.get_strategy(backtest.strategy_id)
-    if not strategy:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
 
     await service.update_backtest_status(backtest_id, BacktestStatus.RUNNING)
 

@@ -52,9 +52,15 @@ class StrategyRepository:
         strategy_type: Optional[StrategyType] = None,
         status: Optional[StrategyStatus] = None,
         keyword: Optional[str] = None,
+        user_id: Optional[int] = None,
     ) -> Tuple[List[Strategy], int]:
         query = select(Strategy)
         count_query = select(func.count(Strategy.id))
+
+        if user_id is not None:
+            user_filter = (Strategy.created_by == user_id) | (Strategy.is_builtin == 1)
+            query = query.where(user_filter)
+            count_query = count_query.where(user_filter)
 
         if strategy_type:
             query = query.where(Strategy.strategy_type == strategy_type)

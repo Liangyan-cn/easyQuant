@@ -46,8 +46,9 @@ class StrategyService:
         strategy_type: Optional[StrategyType] = None,
         status: Optional[StrategyStatus] = None,
         keyword: Optional[str] = None,
+        user_id: Optional[int] = None,
     ) -> Tuple[List[Strategy], int]:
-        return await self.strategy_repo.get_list(page, size, strategy_type, status, keyword)
+        return await self.strategy_repo.get_list(page, size, strategy_type, status, keyword, user_id)
 
     async def update_strategy(
         self,

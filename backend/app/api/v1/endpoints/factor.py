@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, verify_resource_ownership
 from app.models.user import User
 from app.schemas.factor import (
     FactorAnalyzeRequest,
@@ -35,9 +35,10 @@ async def list_factors(
     category: Optional[str] = Query(None),
     keyword: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = FactorService(db)
-    return await service.list_factors(page, size, category, keyword)
+    return await service.list_factors(page, size, category, keyword, user_id=current_user.id)
 
 
 @router.post("", response_model=FactorResponse, status_code=201)
@@ -62,9 +63,12 @@ async def get_category_stats(
 async def get_factor(
     factor_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = FactorService(db)
-    return await service.get_factor(factor_id)
+    factor = await service.get_factor(factor_id)
+    verify_resource_ownership(factor, current_user, "Factor")
+    return factor
 
 
 @router.put("/{factor_id}", response_model=FactorResponse)
@@ -75,6 +79,8 @@ async def update_factor(
     current_user: User = Depends(get_current_user),
 ):
     service = FactorService(db)
+    factor = await service.get_factor(factor_id)
+    verify_resource_ownership(factor, current_user, "Factor")
     return await service.update_factor(factor_id, factor_data)
 
 
@@ -85,6 +91,8 @@ async def delete_factor(
     current_user: User = Depends(get_current_user),
 ):
     service = FactorService(db)
+    factor = await service.get_factor(factor_id)
+    verify_resource_ownership(factor, current_user, "Factor")
     await service.delete_factor(factor_id)
 
 

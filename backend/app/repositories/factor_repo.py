@@ -40,9 +40,15 @@ class FactorRepository:
         size: int = 20,
         category: Optional[FactorCategory] = None,
         keyword: Optional[str] = None,
+        user_id: Optional[int] = None,
     ) -> Tuple[List[Factor], int]:
         query = select(Factor)
         count_query = select(func.count(Factor.id))
+
+        if user_id is not None:
+            user_filter = (Factor.created_by == user_id) | (Factor.is_builtin == 1)
+            query = query.where(user_filter)
+            count_query = count_query.where(user_filter)
 
         if category:
             query = query.where(Factor.category == category)

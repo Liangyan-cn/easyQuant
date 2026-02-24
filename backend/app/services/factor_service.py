@@ -54,6 +54,7 @@ class FactorService:
         size: int = 20,
         category: Optional[str] = None,
         keyword: Optional[str] = None,
+        user_id: Optional[int] = None,
     ) -> FactorListResponse:
         category_enum = None
         if category:
@@ -62,7 +63,7 @@ class FactorService:
             except ValueError:
                 pass
 
-        factors, total = await self.factor_repo.get_list(page, size, category_enum, keyword)
+        factors, total = await self.factor_repo.get_list(page, size, category_enum, keyword, user_id)
         return FactorListResponse(
             items=[FactorResponse.model_validate(f) for f in factors],
             total=total,
