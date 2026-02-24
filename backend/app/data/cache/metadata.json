@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "last_update": "2026-02-24T15:54:24.323383",
+  "ohlcv": {
+    "stock_count": 3,
+    "record_count": 1449,
+    "date_range": [
+      "2024-02-26",
+      "2026-02-24"
+    ],
+    "file_size_mb": 0.06,
+    "last_update": "2026-02-24T15:54:24.323366"
+  }
+}

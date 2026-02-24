@@ -10,9 +10,9 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-REQUEST_DELAY = 0.5
+REQUEST_DELAY = 1.5
 MAX_RETRIES = 3
-RETRY_DELAY = 5
+RETRY_DELAY = 10
 
 
 def fetch_stock_data(stock_code: str, start_date: date, end_date: date) -> pd.DataFrame:
