@@ -31,10 +31,11 @@ router = APIRouter()
 async def list_stocks(
     keyword: Optional[str] = Query(None, description="搜索关键词（股票代码或名称）"),
     market: Optional[str] = Query(None, description="市场筛选（SH/SZ）"),
+    pool_code: Optional[str] = Query(None, description="股票池代码筛选"),
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
 ) -> StockListResponse:
-    return get_stock_list(keyword=keyword, market=market, page=page, size=size)
+    return get_stock_list(keyword=keyword, market=market, pool_code=pool_code, page=page, size=size)
 
 
 @router.get("/stocks/{code}/history", response_model=StockHistoryResponse)

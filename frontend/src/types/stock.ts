@@ -28,6 +28,7 @@ export interface StockListParams {
   size?: number;
   keyword?: string;
   market?: 'SH' | 'SZ' | '';
+  pool_code?: string;
 }
 
 export interface StockListResponse {

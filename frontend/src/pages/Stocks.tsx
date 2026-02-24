@@ -5,7 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
 import { stockApi } from '@/api/stock';
+import { stockPoolApi } from '@/api/stockPool';
 import type { StockInfo, StockListParams } from '@/types/stock';
+import type { StockPool } from '@/types/stockPool';
 import StockPoolTab from '@/components/StockPoolTab';
 
 const { Title } = Typography;
@@ -16,13 +18,26 @@ const StockListTab: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [stocks, setStocks] = useState<StockInfo[]>([]);
   const [total, setTotal] = useState(0);
+  const [pools, setPools] = useState<StockPool[]>([]);
   const [params, setParams] = useState<StockListParams>({
     page: 1,
     size: 20,
     keyword: '',
     market: '',
+    pool_code: '',
   });
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const fetchPools = async () => {
+      try {
+        const response = await stockPoolApi.getPoolList({ page: 1, size: 100 });
+        setPools(response.data.items);
+      } catch {
+      }
+    };
+    fetchPools();
+  }, []);
 
   const fetchStocks = useCallback(async () => {
     if (abortControllerRef.current) {
@@ -61,6 +76,10 @@ const StockListTab: React.FC = () => {
 
   const handleMarketChange = (value: string) => {
     setParams((prev) => ({ ...prev, market: value as StockListParams['market'], page: 1 }));
+  };
+
+  const handlePoolChange = (value: string) => {
+    setParams((prev) => ({ ...prev, pool_code: value, page: 1 }));
   };
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -159,6 +178,19 @@ const StockListTab: React.FC = () => {
           style={{ width: 280 }}
           onSearch={handleSearch}
         />
+        <Select
+          value={params.pool_code}
+          onChange={handlePoolChange}
+          style={{ width: 150 }}
+          placeholder="选择股票池"
+          allowClear
+        >
+          {pools.map((pool) => (
+            <Option key={pool.code} value={pool.code}>
+              {pool.name}
+            </Option>
+          ))}
+        </Select>
         <Select
           value={params.market}
           onChange={handleMarketChange}

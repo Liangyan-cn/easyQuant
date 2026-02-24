@@ -106,9 +106,34 @@ def _is_cache_valid(cache_time: Optional[datetime]) -> bool:
     return (datetime.now() - cache_time).total_seconds() < CACHE_TTL_SECONDS
 
 
+_pool_stocks_cache: dict[str, tuple[datetime, set[str]]] = {}
+
+
+def _get_pool_stocks(pool_code: str) -> set[str]:
+    import json
+    from pathlib import Path
+    
+    if pool_code in _pool_stocks_cache:
+        cache_time, cached_stocks = _pool_stocks_cache[pool_code]
+        if _is_cache_valid(cache_time):
+            return cached_stocks
+    
+    index_file = Path(__file__).parent.parent / "data" / "index_stocks.json"
+    if index_file.exists():
+        with open(index_file, "r") as f:
+            data = json.load(f)
+            if pool_code in data:
+                stocks = set(data[pool_code])
+                _pool_stocks_cache[pool_code] = (datetime.now(), stocks)
+                return stocks
+    
+    return set()
+
+
 def get_stock_list(
     keyword: Optional[str] = None,
     market: Optional[str] = None,
+    pool_code: Optional[str] = None,
     page: int = 1,
     size: int = 20,
 ) -> StockListResponse:
@@ -119,6 +144,11 @@ def get_stock_list(
         _stock_list_cache_time = datetime.now()
     
     filtered = _stock_list_cache
+    
+    if pool_code:
+        pool_stocks = _get_pool_stocks(pool_code)
+        if pool_stocks:
+            filtered = [s for s in filtered if s.code in pool_stocks]
     
     if keyword:
         keyword_lower = keyword.lower()
