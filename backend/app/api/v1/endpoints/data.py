@@ -3,8 +3,26 @@ from typing import Optional
 
 from fastapi import APIRouter, Query
 
-from app.schemas.stock import StockHistoryResponse, StockListResponse
-from app.services.data_service import get_stock_history, get_stock_list
+from app.schemas.stock import (
+    StockHistoryResponse,
+    StockListResponse,
+    BalanceSheetResponse,
+    IncomeStatementResponse,
+    CashFlowResponse,
+    FinancialIndicatorResponse,
+    ValuationResponse,
+    DividendResponse,
+)
+from app.services.data_service import (
+    get_stock_history,
+    get_stock_list,
+    get_balance_sheet,
+    get_income_statement,
+    get_cash_flow,
+    get_financial_indicators,
+    get_valuation,
+    get_dividend,
+)
 
 router = APIRouter()
 
@@ -27,3 +45,51 @@ async def stock_history(
     end: Optional[date] = Query(None, description="结束日期"),
 ) -> StockHistoryResponse:
     return get_stock_history(code=code, period=period, start=start, end=end)
+
+
+@router.get("/stocks/{code}/balance-sheet", response_model=BalanceSheetResponse)
+async def balance_sheet(
+    code: str,
+    limit: int = Query(8, ge=1, le=20, description="返回记录数量"),
+) -> BalanceSheetResponse:
+    return get_balance_sheet(code=code, limit=limit)
+
+
+@router.get("/stocks/{code}/income-statement", response_model=IncomeStatementResponse)
+async def income_statement(
+    code: str,
+    limit: int = Query(8, ge=1, le=20, description="返回记录数量"),
+) -> IncomeStatementResponse:
+    return get_income_statement(code=code, limit=limit)
+
+
+@router.get("/stocks/{code}/cash-flow", response_model=CashFlowResponse)
+async def cash_flow(
+    code: str,
+    limit: int = Query(8, ge=1, le=20, description="返回记录数量"),
+) -> CashFlowResponse:
+    return get_cash_flow(code=code, limit=limit)
+
+
+@router.get("/stocks/{code}/financial-indicators", response_model=FinancialIndicatorResponse)
+async def financial_indicators(
+    code: str,
+    limit: int = Query(8, ge=1, le=20, description="返回记录数量"),
+) -> FinancialIndicatorResponse:
+    return get_financial_indicators(code=code, limit=limit)
+
+
+@router.get("/stocks/{code}/valuation", response_model=ValuationResponse)
+async def valuation(
+    code: str,
+    limit: int = Query(30, ge=1, le=100, description="返回记录数量"),
+) -> ValuationResponse:
+    return get_valuation(code=code, limit=limit)
+
+
+@router.get("/stocks/{code}/dividend", response_model=DividendResponse)
+async def dividend(
+    code: str,
+    limit: int = Query(10, ge=1, le=50, description="返回记录数量"),
+) -> DividendResponse:
+    return get_dividend(code=code, limit=limit)
