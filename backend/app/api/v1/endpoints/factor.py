@@ -67,7 +67,8 @@ async def get_factor(
 ):
     service = FactorService(db)
     factor = await service.get_factor(factor_id)
-    verify_resource_ownership(factor, current_user, "Factor")
+    if not factor.is_builtin:
+        verify_resource_ownership(factor, current_user, "Factor")
     return factor
 
 
