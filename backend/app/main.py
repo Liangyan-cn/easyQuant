@@ -8,6 +8,7 @@ from app.config import settings
 from app.core.database import engine, AsyncSessionLocal
 from app.models import Base
 from app.services.factor_service import init_builtin_factors
+from app.services.stock_pool_init import init_system_pools
 from app.services.strategy_service import init_builtin_strategies
 
 
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
     async with AsyncSessionLocal() as db:
         await init_builtin_factors(db)
         await init_builtin_strategies(db)
+        await init_system_pools(db)
     
     yield
     await engine.dispose()
