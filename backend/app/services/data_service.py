@@ -109,23 +109,54 @@ def _is_cache_valid(cache_time: Optional[datetime]) -> bool:
 _pool_stocks_cache: dict[str, tuple[datetime, set[str]]] = {}
 
 
-def _get_pool_stocks(pool_code: str) -> set[str]:
+def _get_pool_stocks_from_json(pool_code: str) -> Optional[set[str]]:
     import json
     from pathlib import Path
-    
-    if pool_code in _pool_stocks_cache:
-        cache_time, cached_stocks = _pool_stocks_cache[pool_code]
-        if _is_cache_valid(cache_time):
-            return cached_stocks
     
     index_file = Path(__file__).parent.parent / "data" / "index_stocks.json"
     if index_file.exists():
         with open(index_file, "r") as f:
             data = json.load(f)
             if pool_code in data:
-                stocks = set(data[pool_code])
-                _pool_stocks_cache[pool_code] = (datetime.now(), stocks)
-                return stocks
+                return set(data[pool_code])
+    return None
+
+
+def _get_pool_stocks_from_db(pool_code: str) -> Optional[set[str]]:
+    try:
+        from sqlalchemy import create_engine, text
+        from app.config import settings
+        
+        db_url = settings.DATABASE_URL.replace("+asyncpg", "").replace("postgresql://", "postgresql+psycopg2://")
+        engine = create_engine(db_url)
+        
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT spi.stock_code 
+                FROM stock_pool_items spi
+                JOIN stock_pools sp ON sp.id = spi.pool_id
+                WHERE sp.code = :pool_code
+            """), {"pool_code": pool_code})
+            stocks = {row[0] for row in result}
+            return stocks if stocks else None
+    except Exception as e:
+        logger.warning(f"Failed to get pool stocks from DB: {e}")
+        return None
+
+
+def _get_pool_stocks(pool_code: str) -> set[str]:
+    if pool_code in _pool_stocks_cache:
+        cache_time, cached_stocks = _pool_stocks_cache[pool_code]
+        if _is_cache_valid(cache_time):
+            return cached_stocks
+    
+    stocks = _get_pool_stocks_from_json(pool_code)
+    if stocks is None:
+        stocks = _get_pool_stocks_from_db(pool_code)
+    
+    if stocks:
+        _pool_stocks_cache[pool_code] = (datetime.now(), stocks)
+        return stocks
     
     return set()
 
