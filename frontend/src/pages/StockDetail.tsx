@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space } from 'antd';
+import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space, Table, Tabs, Row, Col, Statistic } from 'antd';
 import { ArrowLeftOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { stockApi } from '@/api/stock';
-import type { StockHistoryResponse, OHLCVItem } from '@/types/stock';
+import type { StockHistoryResponse, OHLCVItem, FinancialIndicatorResponse, ValuationResponse } from '@/types/stock';
 
 const { Title } = Typography;
 
@@ -17,12 +17,32 @@ const periodOptions = [
   { label: '月线', value: 'monthly' },
 ];
 
+const formatNumber = (value: number | null | undefined, decimals = 2): string => {
+  if (value === null || value === undefined) return '-';
+  return value.toFixed(decimals);
+};
+
+const formatPercent = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '-';
+  return `${value.toFixed(2)}%`;
+};
+
+const formatMarketCap = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '-';
+  if (value >= 100000000) return `${(value / 100000000).toFixed(2)}亿`;
+  if (value >= 10000) return `${(value / 10000).toFixed(2)}万`;
+  return value.toFixed(2);
+};
+
 const StockDetail: React.FC = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<PeriodType>('daily');
   const [stockData, setStockData] = useState<StockHistoryResponse | null>(null);
+  const [financialData, setFinancialData] = useState<FinancialIndicatorResponse | null>(null);
+  const [valuationData, setValuationData] = useState<ValuationResponse | null>(null);
+  const [financialLoading, setFinancialLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -57,6 +77,28 @@ const StockDetail: React.FC = () => {
       }
     };
   }, [code, period]);
+
+  useEffect(() => {
+    if (!code) return;
+
+    const fetchFinancialData = async () => {
+      setFinancialLoading(true);
+      try {
+        const [financialRes, valuationRes] = await Promise.all([
+          stockApi.getFinancialIndicators(code, 8),
+          stockApi.getValuation(code, 30),
+        ]);
+        setFinancialData(financialRes.data);
+        setValuationData(valuationRes.data);
+      } catch {
+        // 财务数据获取失败不显示错误，静默处理
+      } finally {
+        setFinancialLoading(false);
+      }
+    };
+
+    fetchFinancialData();
+  }, [code]);
 
   const chartOption = useMemo(() => {
     if (!stockData?.items?.length) return {};
@@ -169,6 +211,20 @@ const StockDetail: React.FC = () => {
   const change = latestData && prevData ? latestData.close - prevData.close : 0;
   const changePercent = latestData && prevData ? (change / prevData.close) * 100 : 0;
 
+  const latestValuation = valuationData?.items?.[0];
+  const latestFinancial = financialData?.items?.[0];
+
+  const financialColumns = [
+    { title: '报告期', dataIndex: 'date', key: 'date', width: 120 },
+    { title: 'EPS', dataIndex: 'eps', key: 'eps', render: (v: number) => formatNumber(v) },
+    { title: 'BPS', dataIndex: 'bps', key: 'bps', render: (v: number) => formatNumber(v) },
+    { title: 'ROE', dataIndex: 'roe', key: 'roe', render: (v: number) => formatPercent(v) },
+    { title: 'ROA', dataIndex: 'roa', key: 'roa', render: (v: number) => formatPercent(v) },
+    { title: '毛利率', dataIndex: 'gross_profit_margin', key: 'gross_profit_margin', render: (v: number) => formatPercent(v) },
+    { title: '净利率', dataIndex: 'net_profit_margin', key: 'net_profit_margin', render: (v: number) => formatPercent(v) },
+    { title: '资产负债率', dataIndex: 'debt_ratio', key: 'debt_ratio', render: (v: number) => formatPercent(v) },
+  ];
+
   return (
     <Spin spinning={loading}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -224,25 +280,117 @@ const StockDetail: React.FC = () => {
           )}
         </Card>
 
-        <Card
-          title="K线图"
-          extra={
-            <Segmented
-              options={periodOptions}
-              value={period}
-              onChange={(value) => setPeriod(value as PeriodType)}
-            />
-          }
-        >
-          {stockData?.items?.length ? (
-            <ReactECharts option={chartOption} style={{ height: 500 }} />
-          ) : (
-            <div style={{ height: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
-              <div style={{ fontSize: 16, marginBottom: 8 }}>暂无数据</div>
-              <div style={{ fontSize: 12 }}>数据源可能暂时不可用，请稍后重试</div>
-            </div>
-          )}
-        </Card>
+        <Tabs
+          defaultActiveKey="kline"
+          items={[
+            {
+              key: 'kline',
+              label: 'K线图',
+              children: (
+                <Card
+                  extra={
+                    <Segmented
+                      options={periodOptions}
+                      value={period}
+                      onChange={(value) => setPeriod(value as PeriodType)}
+                    />
+                  }
+                >
+                  {stockData?.items?.length ? (
+                    <ReactECharts option={chartOption} style={{ height: 500 }} />
+                  ) : (
+                    <div style={{ height: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+                      <div style={{ fontSize: 16, marginBottom: 8 }}>暂无数据</div>
+                      <div style={{ fontSize: 12 }}>数据源可能暂时不可用，请稍后重试</div>
+                    </div>
+                  )}
+                </Card>
+              ),
+            },
+            {
+              key: 'valuation',
+              label: '估值指标',
+              children: (
+                <Spin spinning={financialLoading}>
+                  <Card>
+                    {latestValuation ? (
+                      <Row gutter={[16, 16]}>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="市盈率(PE)" value={formatNumber(latestValuation.pe)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="市盈率TTM" value={formatNumber(latestValuation.pe_ttm)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="市净率(PB)" value={formatNumber(latestValuation.pb)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="市销率(PS)" value={formatNumber(latestValuation.ps)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="股息率" value={formatPercent(latestValuation.dv_ratio)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="股息率TTM" value={formatPercent(latestValuation.dv_ttm)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="总市值" value={formatMarketCap(latestValuation.total_mv)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="流通市值" value={formatMarketCap(latestValuation.circ_mv)} />
+                        </Col>
+                      </Row>
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>
+                        暂无估值数据
+                      </div>
+                    )}
+                  </Card>
+                </Spin>
+              ),
+            },
+            {
+              key: 'financial',
+              label: '财务指标',
+              children: (
+                <Spin spinning={financialLoading}>
+                  <Card>
+                    {latestFinancial && (
+                      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="每股收益(EPS)" value={formatNumber(latestFinancial.eps)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="每股净资产(BPS)" value={formatNumber(latestFinancial.bps)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="净资产收益率(ROE)" value={formatPercent(latestFinancial.roe)} />
+                        </Col>
+                        <Col xs={12} sm={8} md={6}>
+                          <Statistic title="总资产收益率(ROA)" value={formatPercent(latestFinancial.roa)} />
+                        </Col>
+                      </Row>
+                    )}
+                    {financialData?.items?.length ? (
+                      <Table
+                        dataSource={financialData.items}
+                        columns={financialColumns}
+                        rowKey="date"
+                        pagination={false}
+                        size="small"
+                        scroll={{ x: 800 }}
+                      />
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>
+                        暂无财务数据
+                      </div>
+                    )}
+                  </Card>
+                </Spin>
+              ),
+            },
+          ]}
+        />
       </Space>
     </Spin>
   );
