@@ -1,9 +1,11 @@
 import argparse
 import asyncio
+import json
 import logging
 import time
 from datetime import date, timedelta
 from pathlib import Path
+from typing import List, Optional
 
 import pandas as pd
 
@@ -37,12 +39,57 @@ def fetch_stock_data(stock_code: str, start_date: date, end_date: date) -> pd.Da
     return pd.DataFrame()
 
 
-async def preload_ohlcv(force: bool = False):
+def get_pool_stocks(pool_code: str) -> List[str]:
+    index_file = Path(__file__).parent.parent / "data" / "index_stocks.json"
+    if index_file.exists():
+        with open(index_file, "r") as f:
+            data = json.load(f)
+            if pool_code in data:
+                return data[pool_code]
+    return []
+
+
+async def get_pool_stocks_from_db(pool_code: str) -> List[str]:
     from app.core.database import async_session_maker
     from app.repositories.stock_pool_repo import StockPoolRepository
+
+    async with async_session_maker() as db:
+        repo = StockPoolRepository(db)
+        pool = await repo.get_by_code(pool_code)
+        if not pool:
+            return []
+        pool_with_items = await repo.get_by_id(pool.id)
+        return [item.stock_code for item in pool_with_items.items] if pool_with_items else []
+
+
+async def resolve_stocks(pool: Optional[str] = None, stock: Optional[str] = None) -> List[str]:
+    if stock:
+        return [stock]
+    
+    if pool:
+        stocks = get_pool_stocks(pool)
+        if not stocks:
+            stocks = await get_pool_stocks_from_db(pool)
+        return stocks
+    
+    return get_pool_stocks("hs300")
+
+
+async def preload_ohlcv(
+    force: bool = False,
+    pool: Optional[str] = None,
+    stock: Optional[str] = None
+):
     from app.services.cache_service import CacheService
 
-    logger.info(f"Starting OHLCV preload (force={force})...")
+    stocks = await resolve_stocks(pool, stock)
+    if not stocks:
+        logger.error("No stocks to process")
+        return
+
+    source = stock if stock else (pool if pool else "hs300")
+    logger.info(f"Starting OHLCV preload for {source} ({len(stocks)} stocks, force={force})...")
+    
     cache = CacheService()
 
     cached_stocks = set()
@@ -52,68 +99,61 @@ async def preload_ohlcv(force: bool = False):
             cached_stocks = set(cached_df)
             logger.info(f"Found {len(cached_stocks)} stocks already cached")
 
-    async with async_session_maker() as db:
-        repo = StockPoolRepository(db)
-        success_count = 0
-        error_count = 0
+    success_count = 0
+    error_count = 0
+    skip_count = 0
 
-        for pool_code in ["hs300"]:
-            pool = await repo.get_by_code(pool_code)
-            if not pool:
-                logger.warning(f"Pool {pool_code} not found, skipping")
+    for i, stock_code in enumerate(stocks):
+        if not force and stock_code in cached_stocks:
+            skip_count += 1
+            continue
+
+        try:
+            end_date = date.today()
+            start_date = end_date - timedelta(days=730)
+
+            df = fetch_stock_data(stock_code, start_date, end_date)
+
+            if df.empty:
+                logger.warning(f"No data for {stock_code}")
                 continue
 
-            pool_with_items = await repo.get_by_id(pool.id)
-            stocks = pool_with_items.items if pool_with_items else []
-            logger.info(f"Processing {len(stocks)} stocks from {pool_code}")
+            df = df.rename(columns={
+                "日期": "date",
+                "开盘": "open",
+                "收盘": "close",
+                "最高": "high",
+                "最低": "low",
+                "成交量": "volume",
+                "成交额": "amount",
+                "涨跌幅": "change_percent",
+            })
+            df = df[["date", "open", "high", "low", "close", "volume", "amount", "change_percent"]]
 
-            for i, item in enumerate(stocks):
-                if not force and item.stock_code in cached_stocks:
-                    continue
+            cache.save_ohlcv(stock_code, df)
+            success_count += 1
+            logger.info(f"[{i+1}/{len(stocks)}] Loaded {stock_code}: {len(df)} records")
 
-                try:
-                    end_date = date.today()
-                    start_date = end_date - timedelta(days=730)
+            time.sleep(REQUEST_DELAY)
 
-                    df = fetch_stock_data(item.stock_code, start_date, end_date)
+        except Exception as e:
+            error_count += 1
+            logger.error(f"Error loading {stock_code}: {e}")
 
-                    if df.empty:
-                        logger.warning(f"No data for {item.stock_code}")
-                        continue
-
-                    df = df.rename(columns={
-                        "日期": "date",
-                        "开盘": "open",
-                        "收盘": "close",
-                        "最高": "high",
-                        "最低": "low",
-                        "成交量": "volume",
-                        "成交额": "amount",
-                        "涨跌幅": "change_percent",
-                    })
-                    df = df[["date", "open", "high", "low", "close", "volume", "amount", "change_percent"]]
-
-                    cache.save_ohlcv(item.stock_code, df)
-                    success_count += 1
-
-                    if success_count % 50 == 0:
-                        logger.info(f"Progress: {success_count} stocks loaded")
-
-                    time.sleep(REQUEST_DELAY)
-
-                except Exception as e:
-                    error_count += 1
-                    logger.error(f"Error loading {item.stock_code}: {e}")
-
-    logger.info(f"OHLCV preload completed: {success_count} success, {error_count} errors")
+    logger.info(f"OHLCV preload completed: {success_count} success, {skip_count} skipped, {error_count} errors")
 
 
-async def update_ohlcv():
-    from app.core.database import async_session_maker
-    from app.repositories.stock_pool_repo import StockPoolRepository
+async def update_ohlcv(pool: Optional[str] = None, stock: Optional[str] = None):
     from app.services.cache_service import CacheService
 
-    logger.info("Starting OHLCV incremental update...")
+    stocks = await resolve_stocks(pool, stock)
+    if not stocks:
+        logger.error("No stocks to process")
+        return
+
+    source = stock if stock else (pool if pool else "hs300")
+    logger.info(f"Starting OHLCV incremental update for {source} ({len(stocks)} stocks)...")
+    
     cache = CacheService()
 
     metadata = cache._metadata.get("ohlcv", {})
@@ -124,7 +164,7 @@ async def update_ohlcv():
         start_date = last_date + timedelta(days=1)
     else:
         logger.warning("No existing cache, running full preload instead")
-        await preload_ohlcv(force=False)
+        await preload_ohlcv(force=False, pool=pool, stock=stock)
         return
 
     end_date = date.today()
@@ -134,46 +174,37 @@ async def update_ohlcv():
 
     logger.info(f"Updating data from {start_date} to {end_date}")
 
-    async with async_session_maker() as db:
-        repo = StockPoolRepository(db)
-        success_count = 0
-        error_count = 0
+    success_count = 0
+    error_count = 0
 
-        for pool_code in ["hs300"]:
-            pool = await repo.get_by_code(pool_code)
-            if not pool:
+    for i, stock_code in enumerate(stocks):
+        try:
+            df = fetch_stock_data(stock_code, start_date, end_date)
+
+            if df.empty:
                 continue
 
-            pool_with_items = await repo.get_by_id(pool.id)
-            stocks = pool_with_items.items if pool_with_items else []
+            df = df.rename(columns={
+                "日期": "date",
+                "开盘": "open",
+                "收盘": "close",
+                "最高": "high",
+                "最低": "low",
+                "成交量": "volume",
+                "成交额": "amount",
+                "涨跌幅": "change_percent",
+            })
+            df = df[["date", "open", "high", "low", "close", "volume", "amount", "change_percent"]]
 
-            for item in stocks:
-                try:
-                    df = fetch_stock_data(item.stock_code, start_date, end_date)
+            cache.append_ohlcv(stock_code, df)
+            success_count += 1
+            logger.info(f"[{i+1}/{len(stocks)}] Updated {stock_code}: {len(df)} new records")
 
-                    if df.empty:
-                        continue
+            time.sleep(REQUEST_DELAY)
 
-                    df = df.rename(columns={
-                        "日期": "date",
-                        "开盘": "open",
-                        "收盘": "close",
-                        "最高": "high",
-                        "最低": "low",
-                        "成交量": "volume",
-                        "成交额": "amount",
-                        "涨跌幅": "change_percent",
-                    })
-                    df = df[["date", "open", "high", "low", "close", "volume", "amount", "change_percent"]]
-
-                    cache.append_ohlcv(item.stock_code, df)
-                    success_count += 1
-
-                    time.sleep(REQUEST_DELAY)
-
-                except Exception as e:
-                    error_count += 1
-                    logger.error(f"Error updating {item.stock_code}: {e}")
+        except Exception as e:
+            error_count += 1
+            logger.error(f"Error updating {stock_code}: {e}")
 
     logger.info(f"OHLCV update completed: {success_count} success, {error_count} errors")
 
@@ -199,18 +230,62 @@ def show_status():
         print(f"  File size: {ohlcv.get('file_size_mb', 0)} MB")
 
 
+def list_pools():
+    index_file = Path(__file__).parent.parent / "data" / "index_stocks.json"
+    print("\n=== Available Pools ===")
+    if index_file.exists():
+        with open(index_file, "r") as f:
+            data = json.load(f)
+            for pool_code, stocks in data.items():
+                print(f"  {pool_code}: {len(stocks)} stocks")
+    print("\n  (User-created pools can be accessed from database)")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Cache management tool")
-    parser.add_argument("command", choices=["preload", "update", "status"], help="Command to run")
-    parser.add_argument("--force", action="store_true", help="Force full reload (ignore existing cache)")
+    parser = argparse.ArgumentParser(
+        description="Cache management tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python cache_loader.py preload                    # Preload hs300 (default)
+  python cache_loader.py preload --pool zz500      # Preload zz500
+  python cache_loader.py preload --stock 000001    # Preload single stock
+  python cache_loader.py preload --pool hs300 --force  # Force reload
+  python cache_loader.py update --stock 600036    # Update single stock
+  python cache_loader.py status                    # Show cache status
+  python cache_loader.py list                      # List available pools
+        """
+    )
+    parser.add_argument(
+        "command",
+        choices=["preload", "update", "status", "list"],
+        help="Command to run"
+    )
+    parser.add_argument(
+        "--pool", "-p",
+        type=str,
+        help="Stock pool code (e.g., hs300, zz500, or user-created pool)"
+    )
+    parser.add_argument(
+        "--stock", "-s",
+        type=str,
+        help="Single stock code (e.g., 000001, 600036)"
+    )
+    parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Force full reload (ignore existing cache)"
+    )
     args = parser.parse_args()
 
     if args.command == "preload":
-        asyncio.run(preload_ohlcv(force=args.force))
+        asyncio.run(preload_ohlcv(force=args.force, pool=args.pool, stock=args.stock))
     elif args.command == "update":
-        asyncio.run(update_ohlcv())
+        asyncio.run(update_ohlcv(pool=args.pool, stock=args.stock))
     elif args.command == "status":
         show_status()
+    elif args.command == "list":
+        list_pools()
 
 
 if __name__ == "__main__":
