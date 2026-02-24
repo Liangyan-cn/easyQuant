@@ -2,8 +2,50 @@
 
 ## 🏃 当前 Sprint
 
-**Sprint ID**: (待启动)
-**状态**: ⚪ 待启动
+**Sprint ID**: Sprint 11
+**标题**: 股票池管理与数据缓存
+**状态**: 🔄 进行中
+**里程碑**: M2.0 - 沙盒系统 (数据服务增强)
+**目标**: 实现股票池管理功能，建立数据缓存机制，支持沪深300+中证500成分股数据的高效访问
+**启动日期**: 2026-02-24
+
+### 强制任务
+- [x] 里程碑对齐与方向校准
+- [x] Sprint 启动检查
+- [ ] 团队任务分配确认
+
+### 任务列表
+
+#### TASK-1: 股票池管理 (P0)
+
+**说明**: 实现股票池的数据模型和 CRUD API，支持用户创建自定义股票池，系统预置沪深300和中证500
+
+**依赖**: 无
+
+**子任务**:
+- [ ] 设计 StockPool 和 StockPoolItem 数据库模型
+- [ ] 实现股票池 CRUD API (创建/读取/更新/删除)
+- [ ] 实现股票池成员管理 API (添加/删除股票)
+- [ ] 实现从指数导入成分股功能 (沪深300/中证500)
+- [ ] 初始化系统预置股票池 (沪深300、中证500)
+- [ ] 前端股票池管理页面
+
+**交付产物**: {任务完成后补充}
+
+#### TASK-2: 数据缓存方案 (P1)
+
+**说明**: 实现股票池内数据的内存缓存机制，支持启动预加载和增量更新，提升数据访问效率
+
+**依赖**: TASK-1
+
+**子任务**:
+- [ ] 设计缓存数据结构 (股票池→股票→数据类型)
+- [ ] 实现启动时预加载逻辑 (加载股票池内所有股票数据)
+- [ ] 实现增量更新机制 (每日收盘后更新当日数据)
+- [ ] 实现缓存状态查询 API (查看缓存命中率、数据量等)
+- [ ] 集成定时任务调度 (APScheduler)
+
+**交付产物**: {任务完成后补充}
 
 ---
 
@@ -255,78 +297,7 @@
 | API 参考   | `docs/api-reference.md`         | API 接口文档         |
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
-| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
-| 文档       | 路径                            |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
-| ---------- | ------------------------------  |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     || 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |
