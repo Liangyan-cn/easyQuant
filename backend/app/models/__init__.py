@@ -23,6 +23,7 @@ from app.models.sandbox import (
     DeploymentStatus,
     TransactionType,
 )
+from app.models.stock_pool import StockPool, StockPoolItem, StockPoolType
 
 __all__ = [
     "Base",
@@ -50,4 +51,7 @@ __all__ = [
     "SandboxStatus",
     "DeploymentStatus",
     "TransactionType",
+    "StockPool",
+    "StockPoolItem",
+    "StockPoolType",
 ]
