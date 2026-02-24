@@ -210,18 +210,31 @@
 
 ---
 
-## 📚 文档索引
+## 📚 核心文档索引
 
-| 文档       | 路径                            |
-| ---------- | ------------------------------- |
-| 产品愿景   | `docs/product/vision.md`        |
-| 用户故事   | `docs/product/user_stories.md`  |
-| 里程碑规划 | `docs/product/milestones.md`    |
-| 技术架构   | `docs/tech/architecture.md`     |
-| API 参考   | `docs/api-reference.md`         |
-| 数据模型   | `docs/tech/data_model.md`       |
-| 代码规范   | `docs/tech/coding_standards.md` |
-| CI/CD 文档 | `docs/tech/cicd.md`             || 文档       | 路径                           |
+> ⚠️ **Sprint 结束检查**: 每次 Sprint 结束时，需检查以下核心文档是否需要更新。如有过时内容，应在下一 Sprint 中补充文档更新任务。
+
+### 产品文档
+
+| 文档       | 路径                                  | 说明               |
+| ---------- | ------------------------------------- | ------------------ |
+| 产品愿景   | `docs/product/vision.md`              | 产品定位与核心价值 |
+| 用户故事   | `docs/product/user_stories.md`        | 用户需求与场景     |
+| 里程碑规划 | `docs/product/milestones.md`          | 版本规划与交付节点 |
+| 产品待办   | `docs/product/backlog.md`             | 功能待办列表       |
+| 竞品分析   | `docs/product/competitor_analysis.md` | 竞品调研与分析     |
+
+### 技术文档
+
+| 文档       | 路径                            | 说明                 |
+| ---------- | ------------------------------- | -------------------- |
+| 技术架构   | `docs/tech/architecture.md`     | 系统架构设计         |
+| 数据模型   | `docs/tech/data_model.md`       | 数据库设计与模型定义 |
+| API 参考   | `docs/api-reference.md`         | API 接口文档         |
+| 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
+| CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
+| 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |

@@ -175,6 +175,20 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
     - **System Design**: 检查架构图是否需要反映本 Sprint 的变更。
     - **Index Check**: 确保新产出的报告已在相关文档中建立索引。
     - **路径一致性**: 确保 `kanban.md` 中引用的文件路径与实际路径一致。
+    - **核心文档过时检查** ⭐:
+      - 参照 `kanban.md` 中的 `📚 核心文档索引` 章节
+      - 逐一检查核心文档是否与当前代码/功能一致
+      - 生成过时文档报告：
+        ```markdown
+        ## 📄 核心文档过时检查
+        
+        | 文档       | 路径                        | 状态       | 说明                     |
+        | ---------- | --------------------------- | ---------- | ------------------------ |
+        | 技术架构   | `docs/tech/architecture.md` | ⚠️ 需更新  | 新增因子模块未体现       |
+        | API 参考   | `docs/api-reference.md`     | ⚠️ 需更新  | 缺少新增的 /factors 端点 |
+        | 数据模型   | `docs/tech/data_model.md`   | ✅ 最新    | -                        |
+        ```
+      - **如有过时文档**: 自动在下一 Sprint 的 Backlog 中添加文档更新任务
 4.  **归档 (Archive)**:
     - 创建 Sprint Summary 文档。
     - 将 `kanban.md` 中的详细任务移动到 Summary。
