@@ -10,7 +10,7 @@
 
 使用方法：
   cd backend
-  ./venv/bin/python scripts/batch_calculate_factors.py
+  PYTHONPATH=. ./venv/bin/python app/scripts/batch_calculate_factors.py
 
 支持的因子：
   - momentum_20d: 20日动量因子
@@ -26,11 +26,7 @@
   - revenue_growth: 营收增长率
 """
 import asyncio
-import sys
 from datetime import date, timedelta
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import select, func
 from app.core.database import async_session_maker

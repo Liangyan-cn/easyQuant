@@ -119,7 +119,7 @@ python scripts/generate_index.py
 cd backend
 
 # 执行批量计算（已有数据的因子会自动跳过）
-./venv/bin/python scripts/batch_calculate_factors.py
+PYTHONPATH=. ./venv/bin/python app/scripts/batch_calculate_factors.py
 ```
 
 **输出示例：**
@@ -152,6 +152,30 @@ cd backend
 - 市净率倒数 (bp_ratio)
 - ROE (roe)
 - 营收增长率 (revenue_growth)
+
+### 数据缓存管理
+
+预加载股票历史数据到本地缓存，减少 API 调用：
+
+```bash
+cd backend
+
+# 查看缓存状态
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py status
+
+# 查看可用股票池
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py list
+
+# 预加载整个股票池
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py preload              # 默认 hs300
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py preload --pool zz500 # 中证500
+
+# 预加载单只股票
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py preload --stock 000001
+
+# 增量更新
+PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py update --pool hs300
+```
 
 ## 🛠️ Agent Skills
 
