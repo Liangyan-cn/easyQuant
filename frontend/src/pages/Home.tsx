@@ -1,4 +1,4 @@
-import { Typography, Card, Row, Col, Tag } from 'antd';
+import { Typography, Card, Row, Col, Tag, Steps } from 'antd';
 import {
   FundOutlined,
   RocketOutlined,
@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -60,6 +60,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 };
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
+
   const features: FeatureCardProps[] = [
     {
       icon: <ExperimentOutlined />,
@@ -98,6 +100,29 @@ const Home: React.FC = () => {
     },
   ];
 
+  const quickStartSteps = [
+    {
+      title: '创建股票池',
+      description: '选择要交易的股票范围',
+      onClick: () => navigate('/stocks'),
+    },
+    {
+      title: '选择策略',
+      description: '使用内置策略或自定义',
+      onClick: () => navigate('/strategies'),
+    },
+    {
+      title: '运行回测',
+      description: '验证策略历史表现',
+      onClick: () => navigate('/strategies'),
+    },
+    {
+      title: '沙盒模拟',
+      description: '虚拟账户实盘验证',
+      onClick: () => navigate('/sandbox'),
+    },
+  ];
+
   return (
     <div>
       <Title level={2}>欢迎使用 EasyQuant</Title>
@@ -105,7 +130,29 @@ const Home: React.FC = () => {
         一站式量化交易平台，助您轻松实现投资策略自动化。
       </Paragraph>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+      <Card style={{ marginTop: 24, marginBottom: 24 }}>
+        <Title level={4} style={{ marginBottom: 16 }}>
+          🚀 快速开始
+        </Title>
+        <Steps
+          items={quickStartSteps.map((step) => ({
+            title: (
+              <Text
+                style={{ cursor: 'pointer' }}
+                onClick={step.onClick}
+              >
+                {step.title}
+              </Text>
+            ),
+            description: step.description,
+          }))}
+        />
+      </Card>
+
+      <Title level={4} style={{ marginBottom: 16 }}>
+        功能模块
+      </Title>
+      <Row gutter={[16, 16]}>
         {features.map((feature, index) => (
           <Col xs={24} sm={12} lg={8} key={index}>
             <FeatureCard {...feature} />
