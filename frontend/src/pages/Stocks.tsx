@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Input, Select, Space, Typography, message } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Space, Typography, message, Tabs } from 'antd';
+import { SearchOutlined, UnorderedListOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
 import { stockApi } from '@/api/stock';
 import type { StockInfo, StockListParams } from '@/types/stock';
+import StockPoolTab from '@/components/StockPoolTab';
 
 const { Title } = Typography;
 const { Option } = Select;
 
-const Stocks: React.FC = () => {
+const StockListTab: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [stocks, setStocks] = useState<StockInfo[]>([]);
@@ -149,8 +150,7 @@ const Stocks: React.FC = () => {
   ];
 
   return (
-    <div>
-      <Title level={3}>股票列表</Title>
+    <>
       <Space style={{ marginBottom: 16 }} wrap>
         <Input.Search
           placeholder="搜索股票名称或代码"
@@ -190,6 +190,38 @@ const Stocks: React.FC = () => {
         })}
         scroll={{ x: 960 }}
       />
+    </>
+  );
+};
+
+const Stocks: React.FC = () => {
+  const tabItems = [
+    {
+      key: 'list',
+      label: (
+        <span>
+          <UnorderedListOutlined />
+          股票列表
+        </span>
+      ),
+      children: <StockListTab />,
+    },
+    {
+      key: 'pools',
+      label: (
+        <span>
+          <AppstoreOutlined />
+          股票池
+        </span>
+      ),
+      children: <StockPoolTab />,
+    },
+  ];
+
+  return (
+    <div>
+      <Title level={3}>股票</Title>
+      <Tabs defaultActiveKey="list" items={tabItems} />
     </div>
   );
 };
