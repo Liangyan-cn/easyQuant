@@ -2,73 +2,33 @@
 
 ## 🏃 当前 Sprint
 
-**Sprint ID**: Sprint 11
-**标题**: 股票池管理与数据缓存
-**状态**: 🔄 进行中 (从暂停恢复)
+**Sprint ID**: 无
+**状态**: ⏸️ 暂停中
+
+> 💡 Sprint 11 因 AKShare 限流暂停，等待限流解除后恢复。
+
+---
+
+### ⏸️ Sprint 11: 股票池管理与数据缓存 (暂停)
+
+**状态**: ⏸️ 暂停 (因 AKShare 限流无法完成缓存预加载测试)
 **里程碑**: M2.0 - 沙盒系统 (数据服务增强)
 **目标**: 实现股票池管理功能，建立数据缓存机制
 **启动日期**: 2026-02-24
-**恢复日期**: 2026-02-24
 
-### 强制任务
-- [x] 里程碑对齐与方向校准
-- [x] Sprint 启动检查
-- [x] 团队任务分配确认
+**已完成任务**:
+- ✅ TASK-1: 股票池管理 (P0) - 后端 API + 前端页面完成
+- 🔄 TASK-2: 数据缓存方案 (P1) - 核心功能完成，预加载因限流暂停
 
-### 任务列表
-
-#### TASK-1: 股票池管理 (P0) ✅
-
-**说明**: 实现股票池的完整管理功能
-
-**依赖**: 无
-
-**子任务**:
-- [x] 后端 StockPool/StockPoolItem 数据模型
-- [x] 后端股票池 CRUD API
-- [x] 前端股票池列表和详情页面
-- [x] 系统股票池初始化 (沪深300/中证500)
+**待恢复条件**: AKShare 限流解除后继续预加载测试
 
 **交付产物**:
-| 产物     | 路径                                         | 说明                     |
-| -------- | -------------------------------------------- | ------------------------ |
-| 数据模型 | `backend/app/models/stock_pool.py`           | StockPool, StockPoolItem |
-| API      | `backend/app/api/v1/endpoints/stock_pool.py` | 股票池 CRUD              |
-| 前端组件 | `frontend/src/components/StockPoolTab.tsx`   | 股票池管理               |
-| 测试     | `backend/tests/test_stock_pool.py`           | 9 个测试用例             |
-
-#### TASK-2: 数据缓存方案 (P1) 🔄
-
-**说明**: 建立数据缓存机制，减少 AKShare API 调用
-
-**依赖**: TASK-1
-
-**子任务**:
-- [x] CacheService 核心实现 (Parquet 持久化)
-- [x] 缓存预加载脚本
-- [ ] 预加载测试验证 (因 AKShare 限流暂停)
-- [ ] 缓存失效策略优化
-
-**交付产物**:
-| 产物       | 路径                                    | 说明           |
-| ---------- | --------------------------------------- | -------------- |
-| 缓存服务   | `backend/app/services/cache_service.py` | Parquet 持久化 |
-| 预加载脚本 | `backend/app/scripts/cache_loader.py`   | 批量预加载     |
-| 测试       | `backend/tests/test_cache.py`           | 4 个测试用例   |
-
-#### TASK-3: 预加载验证 (P1)
-
-**说明**: 验证缓存预加载功能是否正常工作
-
-**依赖**: TASK-2
-
-**子任务**:
-- [ ] 测试沪深300预加载
-- [ ] 测试中证500预加载
-- [ ] 验证缓存命中率
-- [ ] 性能基准测试
-
-**交付产物**: {任务完成后补充}
+- `backend/app/models/stock_pool.py` - StockPool, StockPoolItem 数据模型
+- `backend/app/services/cache_service.py` - CacheService (Parquet 持久化)
+- `backend/app/scripts/cache_loader.py` - 预加载脚本
+- `frontend/src/components/StockPoolTab.tsx` - 股票池管理组件
+- `backend/tests/test_stock_pool.py` - 9 个测试
+- `backend/tests/test_cache.py` - 4 个测试
 
 ---
 
@@ -337,7 +297,14 @@
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
 | 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
-| 文档       | 路径                           |
+| 文档       | 路径                            |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |
