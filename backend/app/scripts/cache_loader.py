@@ -57,7 +57,7 @@ async def preload_ohlcv(force: bool = False):
         success_count = 0
         error_count = 0
 
-        for pool_code in ["hs300", "zz500"]:
+        for pool_code in ["hs300"]:
             pool = await repo.get_by_code(pool_code)
             if not pool:
                 logger.warning(f"Pool {pool_code} not found, skipping")
@@ -139,7 +139,7 @@ async def update_ohlcv():
         success_count = 0
         error_count = 0
 
-        for pool_code in ["hs300", "zz500"]:
+        for pool_code in ["hs300"]:
             pool = await repo.get_by_code(pool_code)
             if not pool:
                 continue
