@@ -114,6 +114,19 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 2.  **更新状态**:
     - 将任务状态从 `[ ]` 改为 `[x]`
     - 将子任务状态全部标记为完成
+3.  **完成度检测** ⭐:
+    - 检查当前 Sprint 所有任务是否已完成
+    - 如果 **所有任务都已完成**，主动提醒用户：
+      ```
+      🎉 Sprint 所有任务已完成！
+      
+      建议执行以下操作：
+      1. 运行 `git status` 检查未提交的代码
+      2. 提交所有代码变更
+      3. 执行 "结束 Sprint" 完成归档
+      
+      是否现在结束 Sprint？
+      ```
 
 > ⚠️ **交付产物后补原则**
 > - 任务创建时，交付产物可以不明确
@@ -124,11 +137,15 @@ description: "自动化处理 Sprint 启动 (Kick-off) 和 结束 (Closing) 流�
 >   - 记录实际产出，而非预期产出
 
 ### 🔴 Sprint 结束 (Sprint Closing)
-**触发条件**: "End Sprint", "Close Sprint", "Sprint Retrospective".
+**触发条件**: "End Sprint", "Close Sprint", "Sprint Retrospective", 或所有任务完成后用户确认结束.
 **工作流**:
 1.  **验证 (Verify)**:
     - 确保 `kanban.md` 中所有任务均已完成或标记。
     - 如果存在未完成任务，询问用户是延期还是完成。
+    - **代码提交检查** ⭐: 运行 `git status`，如果存在未提交的代码变更：
+      - 列出所有未提交的文件
+      - **强烈建议用户先提交代码**，再继续 Sprint 结束流程
+      - 提供分批提交建议（按功能模块）
 2.  **未登记任务检查 (Unregistered Work Check)** ⭐:
     - 运行 `git status --porcelain` 获取所有本地变更。
     - 对比 `kanban.md` 中已登记的交付物，识别未登记的工作：
