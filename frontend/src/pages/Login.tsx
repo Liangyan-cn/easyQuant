@@ -21,8 +21,8 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const response = await authApi.login(values.email, values.password);
-      const { accessToken, refreshToken } = response.data;
-      login(accessToken, refreshToken);
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token);
 
       const userResponse = await authApi.getCurrentUser();
       useAuthStore.getState().setUser(userResponse.data);
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
             name="password"
             rules={[
               { required: true, message: '请输入密码' },
-              { min: 6, message: '密码至少6个字符' },
+              { min: 8, message: '密码至少8个字符' },
             ]}
           >
             <Input.Password prefix={<LockOutlined />} placeholder="密码" />

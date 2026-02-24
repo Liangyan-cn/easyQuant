@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Segmented, Spin, Typography, Button, message, Space } from 'antd';
 import { ArrowLeftOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
+import axios from 'axios';
 import { stockApi } from '@/api/stock';
 import type { StockHistoryResponse, OHLCVItem } from '@/types/stock';
 
@@ -22,29 +23,45 @@ const StockDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<PeriodType>('daily');
   const [stockData, setStockData] = useState<StockHistoryResponse | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!code) return;
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await stockApi.getStockHistory(code, { period, limit: 120 });
+        const response = await stockApi.getStockHistory(code, { period }, {
+          signal: abortControllerRef.current?.signal,
+        });
         setStockData(response.data);
-      } catch {
-        message.error('获取股票数据失败');
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          message.error('获取股票数据失败');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [code, period]);
 
   const chartOption = useMemo(() => {
-    if (!stockData?.data?.length) return {};
+    if (!stockData?.items?.length) return {};
 
-    const data = stockData.data;
+    const data = stockData.items;
     const dates = data.map((item: OHLCVItem) => item.date);
     const ohlcData = data.map((item: OHLCVItem) => [item.open, item.close, item.low, item.high]);
     const volumes = data.map((item: OHLCVItem, index: number) => {
@@ -147,8 +164,8 @@ const StockDetail: React.FC = () => {
     };
   }, [stockData]);
 
-  const latestData = stockData?.data?.[stockData.data.length - 1];
-  const prevData = stockData?.data?.[stockData.data.length - 2];
+  const latestData = stockData?.items?.[stockData.items.length - 1];
+  const prevData = stockData?.items?.[stockData.items.length - 2];
   const change = latestData && prevData ? latestData.close - prevData.close : 0;
   const changePercent = latestData && prevData ? (change / prevData.close) * 100 : 0;
 
@@ -163,7 +180,7 @@ const StockDetail: React.FC = () => {
 
         <Card>
           <Title level={3}>
-            {stockData?.name || '-'} ({stockData?.code || code})
+            {stockData?.code || code}
             {latestData && (
               <span
                 style={{
@@ -217,7 +234,7 @@ const StockDetail: React.FC = () => {
             />
           }
         >
-          {stockData?.data?.length ? (
+          {stockData?.items?.length ? (
             <ReactECharts option={chartOption} style={{ height: 500 }} />
           ) : (
             <div style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

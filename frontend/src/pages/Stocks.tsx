@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Input, Select, Space, Typography, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import axios from 'axios';
 import { stockApi } from '@/api/stock';
 import type { StockInfo, StockListParams } from '@/types/stock';
 
@@ -16,19 +17,29 @@ const Stocks: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [params, setParams] = useState<StockListParams>({
     page: 1,
-    pageSize: 20,
+    size: 20,
     keyword: '',
     market: '',
   });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchStocks = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
     try {
-      const response = await stockApi.getStockList(params);
+      const response = await stockApi.getStockList(params, {
+        signal: abortControllerRef.current.signal,
+      });
       setStocks(response.data.items);
       setTotal(response.data.total);
-    } catch {
-      message.error('获取股票列表失败');
+    } catch (error) {
+      if (!axios.isCancel(error)) {
+        message.error('获取股票列表失败');
+      }
     } finally {
       setLoading(false);
     }
@@ -36,6 +47,11 @@ const Stocks: React.FC = () => {
 
   useEffect(() => {
     fetchStocks();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchStocks]);
 
   const handleSearch = (value: string) => {
@@ -50,7 +66,7 @@ const Stocks: React.FC = () => {
     setParams((prev) => ({
       ...prev,
       page: pagination.current || 1,
-      pageSize: pagination.pageSize || 20,
+      size: pagination.pageSize || 20,
     }));
   };
 
@@ -161,7 +177,7 @@ const Stocks: React.FC = () => {
         loading={loading}
         pagination={{
           current: params.page,
-          pageSize: params.pageSize,
+          pageSize: params.size,
           total,
           showSizeChanger: true,
           showQuickJumper: true,

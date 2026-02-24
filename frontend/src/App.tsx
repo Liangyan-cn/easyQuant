@@ -7,6 +7,12 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Stocks from '@/pages/Stocks';
 import StockDetail from '@/pages/StockDetail';
+import Factors from '@/pages/Factors';
+import FactorDetail from '@/pages/FactorDetail';
+import Strategies from '@/pages/Strategies';
+import StrategyDetail from '@/pages/StrategyDetail';
+import Sandbox from '@/pages/Sandbox';
+import SandboxDetail from '@/pages/SandboxDetail';
 import { useAuthStore } from '@/stores/authStore';
 
 interface ProtectedRouteProps {
@@ -48,6 +54,12 @@ function App() {
             <Route index element={<Home />} />
             <Route path="stocks" element={<Stocks />} />
             <Route path="stocks/:code" element={<StockDetail />} />
+            <Route path="factors" element={<Factors />} />
+            <Route path="factors/:id" element={<FactorDetail />} />
+            <Route path="strategies" element={<Strategies />} />
+            <Route path="strategies/:id" element={<StrategyDetail />} />
+            <Route path="sandbox" element={<Sandbox />} />
+            <Route path="sandbox/:id" element={<SandboxDetail />} />
           </Route>
         </Routes>
       </BrowserRouter>

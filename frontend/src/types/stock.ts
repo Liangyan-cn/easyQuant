@@ -25,7 +25,7 @@ export interface OHLCVItem {
 
 export interface StockListParams {
   page?: number;
-  pageSize?: number;
+  size?: number;
   keyword?: string;
   market?: 'SH' | 'SZ' | '';
 }
@@ -34,19 +34,17 @@ export interface StockListResponse {
   items: StockInfo[];
   total: number;
   page: number;
-  pageSize: number;
+  size: number;
 }
 
 export interface StockHistoryParams {
   period?: 'daily' | 'weekly' | 'monthly';
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
+  start?: string;
+  end?: string;
 }
 
 export interface StockHistoryResponse {
   code: string;
-  name: string;
   period: 'daily' | 'weekly' | 'monthly';
-  data: OHLCVItem[];
+  items: OHLCVItem[];
 }

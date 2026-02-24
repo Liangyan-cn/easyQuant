@@ -6,7 +6,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -81,18 +81,18 @@ axiosInstance.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post<TokenResponse>(`${baseURL}/auth/refresh`, {
-          refreshToken,
+        const response = await axios.post<TokenResponse>(`${baseURL}/auth/refresh`, null, {
+          headers: { Authorization: `Bearer ${refreshToken}` }
         });
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { access_token, refresh_token } = response.data;
 
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('refreshToken', refresh_token);
 
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
 
-        processQueue(null, accessToken);
+        processQueue(null, access_token);
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {

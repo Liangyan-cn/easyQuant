@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import { request } from './client';
 import type {
   StockListParams,
@@ -7,11 +8,11 @@ import type {
 } from '@/types/stock';
 
 export const stockApi = {
-  getStockList(params?: StockListParams) {
-    return request.get<StockListResponse>('/stocks', { params });
+  getStockList(params?: StockListParams, config?: AxiosRequestConfig) {
+    return request.get<StockListResponse>('/data/stocks', { params, ...config });
   },
 
-  getStockHistory(code: string, params?: StockHistoryParams) {
-    return request.get<StockHistoryResponse>(`/stocks/${code}/history`, { params });
+  getStockHistory(code: string, params?: StockHistoryParams, config?: AxiosRequestConfig) {
+    return request.get<StockHistoryResponse>(`/data/stocks/${code}/history`, { params, ...config });
   },
 };
