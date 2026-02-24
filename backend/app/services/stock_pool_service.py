@@ -120,13 +120,19 @@ class StockPoolService:
         return pool.pool_type == StockPoolType.USER.value and pool.user_id == user_id
 
     def _to_response(self, pool: StockPool) -> StockPoolResponse:
+        if hasattr(pool, "stock_count"):
+            stock_count = pool.stock_count
+        elif "items" in pool.__dict__ and pool.items is not None:
+            stock_count = len(pool.items)
+        else:
+            stock_count = 0
         return StockPoolResponse(
             id=pool.id,
             name=pool.name,
             code=pool.code,
             pool_type=pool.pool_type,
             description=pool.description,
-            stock_count=getattr(pool, "stock_count", len(pool.items) if pool.items else 0),
+            stock_count=stock_count,
             created_at=pool.created_at,
             updated_at=pool.updated_at,
         )
