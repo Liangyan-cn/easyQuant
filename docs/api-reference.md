@@ -72,6 +72,80 @@ Authorization: Bearer <token>
 - `end_date` (string): 结束日期
 - `period` (string): 周期 (day/week/month)
 
+### GET /data/stocks/{code}/financial
+获取股票财务数据
+
+**Query Parameters:**
+- `report_type` (string): 报表类型 (balance_sheet/income/cash_flow/indicators/valuation)
+
+**Response:**
+```json
+{
+  "code": "000001.SZ",
+  "report_type": "balance_sheet",
+  "data": [...]
+}
+```
+
+### GET /data/stocks/{code}/dividend
+获取股票分红数据
+
+---
+
+## 股票池 API
+
+### GET /stock-pools
+获取股票池列表
+
+**Query Parameters:**
+- `page` (int): 页码，默认 1
+- `size` (int): 每页数量，默认 20
+- `include_system` (bool): 是否包含系统池，默认 true
+
+### GET /stock-pools/{id}
+获取股票池详情（包含成分股列表）
+
+### POST /stock-pools
+创建股票池
+
+**Request Body:**
+```json
+{
+  "name": "我的股票池",
+  "description": "自定义股票池",
+  "stock_codes": ["000001.SZ", "000002.SZ"]
+}
+```
+
+### PUT /stock-pools/{id}
+更新股票池
+
+### DELETE /stock-pools/{id}
+删除股票池（仅限用户创建的池）
+
+### POST /stock-pools/{id}/stocks
+添加股票到池
+
+**Request Body:**
+```json
+{
+  "stock_codes": ["000003.SZ", "000004.SZ"]
+}
+```
+
+### DELETE /stock-pools/{id}/stocks/{code}
+从池中移除股票
+
+### POST /stock-pools/{id}/import-index
+从指数导入成分股
+
+**Request Body:**
+```json
+{
+  "index_code": "000300"
+}
+```
+
 ---
 
 ## 因子 API

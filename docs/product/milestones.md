@@ -91,9 +91,9 @@ easyQuant 致力于打破量化投资的技术壁垒，为个人投资者提供�
 | **技术文档** | 技术架构设计          | `docs/tech/architecture.md`           | ✅ 完成   |
 |              | 数据架构设计          | `docs/tech/data_model.md`             | ✅ 完成   |
 |              | API 设计规范          | `docs/tech/api_spec.md`               | ✅ 完成   |
-| **项目管理** | 开发环境搭建指南      | `docs/tech/setup.md`                  | ⬜ 待完成 |
-|              | 代码规范与 Git 工作流 | `docs/tech/coding_standards.md`       | ⬜ 待完成 |
-|              | CI/CD 流程设计        | `docs/tech/cicd.md`                   | ⬜ 待完成 |
+| **项目管理** | 开发环境搭建指南      | `docs/tech/setup.md`                  | ✅ 完成   |
+|              | 代码规范与 Git 工作流 | `docs/tech/coding_standards.md`       | ✅ 完成   |
+|              | CI/CD 流程设计        | `docs/tech/cicd.md`                   | ✅ 完成   |
 
 ### 3.3 验收标准
 
