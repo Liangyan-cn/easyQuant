@@ -1,6 +1,6 @@
 ---
 name: "tech-doc-generator"
-description: "生成标准化的 Tech Design（技术方案）文档。用户要求写技术方案/架构设计/接口设计/Tech Doc 时调用。"
+description: "Use AFTER prd-generator or when user explicitly requests technical design. After tech design, invoke writing-plans for implementation plan."
 ---
 
 # Tech Doc Generator
@@ -129,12 +129,12 @@ description: "生成标准化的 Tech Design（技术方案）文档。用户要
 ## 3.5 性能预估与容量规划 (Performance Estimation)
 
 ### 性能指标预估
-| 指标 | 目标值 | 测量方法 |
-|------|--------|----------|
-| 延迟 (Latency) | < 200ms | P95 响应时间 |
-| 吞吐 (Throughput) | > 100 QPS | 并发请求数 |
-| 准确率 (Accuracy) | > 90% | Golden Dataset 评测 |
-| 召回率 (Recall) | > 85% | Golden Dataset 评测 |
+| 指标              | 目标值    | 测量方法            |
+| ----------------- | --------- | ------------------- |
+| 延迟 (Latency)    | < 200ms   | P95 响应时间        |
+| 吞吐 (Throughput) | > 100 QPS | 并发请求数          |
+| 准确率 (Accuracy) | > 90%     | Golden Dataset 评测 |
+| 召回率 (Recall)   | > 85%     | Golden Dataset 评测 |
 
 ### 资源消耗预估
 * **内存**: <预估峰值内存占用>（如 "2GB"）
@@ -190,3 +190,12 @@ description: "生成标准化的 Tech Design（技术方案）文档。用户要
 2.  **严禁幻觉**: 验证 SDK 参数。
 3.  **安全**: 对敏感信息使用占位符 (例如 `api_key="<YOUR_KEY>"`).
 </constraints>
+
+## 6. After Technical Design
+
+**REQUIRED NEXT STEP:** 技术方案生成完成后，必须调用 `writing-plans` 技能编写实施计划。
+
+**提示用户：**
+> 技术方案已生成完成。下一步：
+> - 调用 `writing-plans` 技能编写详细的实施计划
+> - 或者说 "编写实施计划" 开始下一阶段
