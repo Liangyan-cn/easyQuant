@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LineChartOutlined, CopyOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm, Alert, Tooltip } from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LineChartOutlined, CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
@@ -248,6 +248,25 @@ const Strategies: React.FC = () => {
         </Button>
       </div>
 
+      {strategies.length === 0 && !loading && (
+        <Alert
+          message="开始使用策略"
+          description={
+            <div>
+              <p style={{ marginBottom: 8 }}>策略是定义买卖规则的交易逻辑。您可以：</p>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                <li><strong>使用内置策略</strong>：系统预置的经典策略，可直接运行回测</li>
+                <li><strong>复制并修改</strong>：基于内置策略调整参数</li>
+                <li><strong>新建自定义策略</strong>：编写自己的交易逻辑</li>
+              </ul>
+            </div>
+          }
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <Space style={{ marginBottom: 16 }}>
         <Input.Search
           placeholder="搜索策略名称或代码"
@@ -262,13 +281,6 @@ const Strategies: React.FC = () => {
           style={{ width: 130 }}
           options={typeOptions}
           onChange={handleTypeChange}
-        />
-        <Select
-          placeholder="状态"
-          allowClear
-          style={{ width: 100 }}
-          options={statusOptions}
-          onChange={handleStatusChange}
         />
       </Space>
 

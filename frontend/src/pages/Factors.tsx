@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ExperimentOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Space, Typography, Button, Tag, Modal, Form, message, Popconfirm, Tooltip, Alert } from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ExperimentOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import axios from 'axios';
@@ -120,7 +120,12 @@ const Factors: React.FC = () => {
   const handleInitBuiltin = async () => {
     try {
       const response = await factorApi.initBuiltinFactors();
-      message.success(response.data.message);
+      const count = response.data.message.match(/\d+/)?.[0] || '0';
+      if (count === '0') {
+        message.info('内置因子已存在，无需重复初始化');
+      } else {
+        message.success(`成功初始化 ${count} 个内置因子`);
+      }
       fetchFactors();
     } catch {
       message.error('初始化失败');
@@ -208,12 +213,27 @@ const Factors: React.FC = () => {
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={4} style={{ margin: 0 }}>因子管理</Title>
         <Space>
-          <Button onClick={handleInitBuiltin}>初始化内置因子</Button>
+          <Tooltip title="首次使用时点击，将创建系统预置的常用因子（如PE、ROE、动量等）">
+            <Button onClick={handleInitBuiltin}>
+              初始化内置因子
+              <QuestionCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+            </Button>
+          </Tooltip>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             新建因子
           </Button>
         </Space>
       </div>
+
+      {factors.length === 0 && !loading && (
+        <Alert
+          message="开始使用因子"
+          description="点击「初始化内置因子」按钮创建系统预置因子，或点击「新建因子」创建自定义因子。因子用于量化选股，如市盈率(PE)、净资产收益率(ROE)等。"
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Space style={{ marginBottom: 16 }}>
         <Input.Search

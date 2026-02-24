@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Button, Space, Typography, message, DatePicker, Spin, Statistic, Row, Col, Tag, Checkbox } from 'antd';
-import { ArrowLeftOutlined, ExperimentOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Button, Space, Typography, message, DatePicker, Spin, Statistic, Row, Col, Tag, Checkbox, Tooltip, Alert } from 'antd';
+import { ArrowLeftOutlined, ExperimentOutlined, ReloadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -209,7 +209,30 @@ const FactorDetail: React.FC = () => {
         </Descriptions>
       </Card>
 
-      <Card title="因子分析" style={{ marginBottom: 16 }}>
+      <Card
+        title={
+          <Space>
+            因子分析
+            <Tooltip title="因子分析用于评估因子的预测能力。IC（信息系数）衡量因子值与未来收益的相关性，IR（信息比率）衡量因子的稳定性。">
+              <QuestionCircleOutlined style={{ color: '#999' }} />
+            </Tooltip>
+          </Space>
+        }
+        style={{ marginBottom: 16 }}
+      >
+        <Alert
+          message="如何解读分析结果"
+          description={
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <li><strong>IC 均值</strong>: 因子预测能力，|IC| &gt; 0.03 表示有效，&gt; 0.05 表示较强</li>
+              <li><strong>IR (信息比率)</strong>: IC均值/IC标准差，&gt; 0.5 表示因子稳定有效</li>
+              <li><strong>分组收益</strong>: 按因子值分5组，收益应呈单调递增或递减</li>
+            </ul>
+          }
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
         <Space style={{ marginBottom: 16 }} wrap>
           <Text>日期范围:</Text>
           <RangePicker
