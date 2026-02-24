@@ -4,8 +4,8 @@ from httpx import AsyncClient
 
 class TestFactorAPI:
     @pytest.mark.asyncio
-    async def test_list_factors_empty(self, client: AsyncClient):
-        response = await client.get("/api/v1/factors")
+    async def test_list_factors_empty(self, client: AsyncClient, auth_headers: dict):
+        response = await client.get("/api/v1/factors", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "items" in data
@@ -22,9 +22,9 @@ class TestFactorAPI:
         assert data["count"] >= 0
 
     @pytest.mark.asyncio
-    async def test_list_factors_after_init(self, client: AsyncClient):
+    async def test_list_factors_after_init(self, client: AsyncClient, auth_headers: dict):
         await client.post("/api/v1/factors/init-builtin")
-        response = await client.get("/api/v1/factors")
+        response = await client.get("/api/v1/factors", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 0
@@ -79,15 +79,15 @@ class TestFactorAPI:
         )
         factor_id = create_response.json()["id"]
 
-        response = await client.get(f"/api/v1/factors/{factor_id}")
+        response = await client.get(f"/api/v1/factors/{factor_id}", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == factor_id
         assert data["code"] == "get_test_factor"
 
     @pytest.mark.asyncio
-    async def test_get_factor_not_found(self, client: AsyncClient):
-        response = await client.get("/api/v1/factors/99999")
+    async def test_get_factor_not_found(self, client: AsyncClient, auth_headers: dict):
+        response = await client.get("/api/v1/factors/99999", headers=auth_headers)
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -135,7 +135,7 @@ class TestFactorAPI:
         )
         assert response.status_code == 204
 
-        get_response = await client.get(f"/api/v1/factors/{factor_id}")
+        get_response = await client.get(f"/api/v1/factors/{factor_id}", headers=auth_headers)
         assert get_response.status_code == 404
 
     @pytest.mark.asyncio
@@ -147,7 +147,7 @@ class TestFactorAPI:
         }
         await client.post("/api/v1/factors", json=factor_data, headers=auth_headers)
 
-        response = await client.get("/api/v1/factors", params={"category": "growth"})
+        response = await client.get("/api/v1/factors", params={"category": "growth"}, headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         for item in data["items"]:
@@ -162,7 +162,7 @@ class TestFactorAPI:
         }
         await client.post("/api/v1/factors", json=factor_data, headers=auth_headers)
 
-        response = await client.get("/api/v1/factors", params={"keyword": "关键词"})
+        response = await client.get("/api/v1/factors", params={"keyword": "关键词"}, headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 1

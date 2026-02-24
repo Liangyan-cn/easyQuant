@@ -25,10 +25,11 @@ def test_deployment_data():
 
 class TestSandboxAccountAPI:
     @pytest.mark.asyncio
-    async def test_create_account(self, client: AsyncClient, test_account_data):
+    async def test_create_account(self, client: AsyncClient, auth_headers: dict, test_account_data):
         response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         assert response.status_code == 201
         data = response.json()
@@ -38,8 +39,8 @@ class TestSandboxAccountAPI:
         assert data["status"] == "active"
 
     @pytest.mark.asyncio
-    async def test_list_accounts(self, client: AsyncClient):
-        response = await client.get("/api/v1/sandbox/accounts")
+    async def test_list_accounts(self, client: AsyncClient, auth_headers: dict):
+        response = await client.get("/api/v1/sandbox/accounts", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "items" in data
@@ -48,14 +49,15 @@ class TestSandboxAccountAPI:
         assert "size" in data
 
     @pytest.mark.asyncio
-    async def test_get_account_detail(self, client: AsyncClient, test_account_data):
+    async def test_get_account_detail(self, client: AsyncClient, auth_headers: dict, test_account_data):
         create_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = create_response.json()["id"]
 
-        response = await client.get(f"/api/v1/sandbox/accounts/{account_id}")
+        response = await client.get(f"/api/v1/sandbox/accounts/{account_id}", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "account" in data
@@ -65,10 +67,11 @@ class TestSandboxAccountAPI:
         assert "daily_values" in data
 
     @pytest.mark.asyncio
-    async def test_update_account(self, client: AsyncClient, test_account_data):
+    async def test_update_account(self, client: AsyncClient, auth_headers: dict, test_account_data):
         create_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = create_response.json()["id"]
 
@@ -76,26 +79,29 @@ class TestSandboxAccountAPI:
         response = await client.put(
             f"/api/v1/sandbox/accounts/{account_id}",
             json=update_data,
+            headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Updated Account Name"
 
     @pytest.mark.asyncio
-    async def test_delete_account(self, client: AsyncClient, test_account_data):
+    async def test_delete_account(self, client: AsyncClient, auth_headers: dict, test_account_data):
         create_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = create_response.json()["id"]
 
-        response = await client.delete(f"/api/v1/sandbox/accounts/{account_id}")
+        response = await client.delete(f"/api/v1/sandbox/accounts/{account_id}", headers=auth_headers)
         assert response.status_code == 204
 
     @pytest.mark.asyncio
-    async def test_deposit(self, client: AsyncClient, test_account_data):
+    async def test_deposit(self, client: AsyncClient, auth_headers: dict, test_account_data):
         create_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = create_response.json()["id"]
         initial_cash = create_response.json()["current_cash"]
@@ -104,15 +110,17 @@ class TestSandboxAccountAPI:
         response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/deposit",
             json={"amount": deposit_amount},
+            headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.json()["current_cash"] == initial_cash + deposit_amount
 
     @pytest.mark.asyncio
-    async def test_reset_account(self, client: AsyncClient, test_account_data):
+    async def test_reset_account(self, client: AsyncClient, auth_headers: dict, test_account_data):
         create_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = create_response.json()["id"]
 
@@ -120,6 +128,7 @@ class TestSandboxAccountAPI:
         response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/reset",
             json={"initial_capital": new_capital},
+            headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.json()["initial_capital"] == new_capital
@@ -128,16 +137,18 @@ class TestSandboxAccountAPI:
 
 class TestSandboxDeploymentAPI:
     @pytest.mark.asyncio
-    async def test_create_deployment(self, client: AsyncClient, test_account_data, test_deployment_data):
+    async def test_create_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
         response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/deployments",
             json=test_deployment_data,
+            headers=auth_headers,
         )
         assert response.status_code == 201
         data = response.json()
@@ -146,68 +157,75 @@ class TestSandboxDeploymentAPI:
         assert data["status"] == "pending"
 
     @pytest.mark.asyncio
-    async def test_get_deployment(self, client: AsyncClient, test_account_data, test_deployment_data):
+    async def test_get_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
         deployment_response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/deployments",
             json=test_deployment_data,
+            headers=auth_headers,
         )
         deployment_id = deployment_response.json()["id"]
 
-        response = await client.get(f"/api/v1/sandbox/deployments/{deployment_id}")
+        response = await client.get(f"/api/v1/sandbox/deployments/{deployment_id}", headers=auth_headers)
         assert response.status_code == 200
         assert response.json()["id"] == deployment_id
 
     @pytest.mark.asyncio
-    async def test_run_deployment(self, client: AsyncClient, test_account_data, test_deployment_data):
+    async def test_run_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
         deployment_response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/deployments",
             json=test_deployment_data,
+            headers=auth_headers,
         )
         deployment_id = deployment_response.json()["id"]
 
-        response = await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/run")
+        response = await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/run", headers=auth_headers)
         assert response.status_code == 200
         assert response.json()["status"] == "running"
 
     @pytest.mark.asyncio
-    async def test_stop_deployment(self, client: AsyncClient, test_account_data, test_deployment_data):
+    async def test_stop_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
         deployment_response = await client.post(
             f"/api/v1/sandbox/accounts/{account_id}/deployments",
             json=test_deployment_data,
+            headers=auth_headers,
         )
         deployment_id = deployment_response.json()["id"]
 
-        await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/run")
+        await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/run", headers=auth_headers)
 
-        response = await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/stop")
+        response = await client.post(f"/api/v1/sandbox/deployments/{deployment_id}/stop", headers=auth_headers)
         assert response.status_code == 200
         assert response.json()["status"] == "paused"
 
 
 class TestSandboxCompareAPI:
     @pytest.mark.asyncio
-    async def test_compare_strategies_empty(self, client: AsyncClient):
+    async def test_compare_strategies_empty(self, client: AsyncClient, auth_headers: dict):
         response = await client.post(
             "/api/v1/sandbox/compare",
             json={"deployment_ids": [999, 998]},
+            headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
@@ -218,39 +236,42 @@ class TestSandboxCompareAPI:
 
 class TestSandboxAccountValidation:
     @pytest.mark.asyncio
-    async def test_create_account_invalid_capital(self, client: AsyncClient):
+    async def test_create_account_invalid_capital(self, client: AsyncClient, auth_headers: dict):
         response = await client.post(
             "/api/v1/sandbox/accounts",
             json={
                 "name": "Invalid Account",
                 "initial_capital": 100,
             },
+            headers=auth_headers,
         )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_create_account_empty_name(self, client: AsyncClient):
+    async def test_create_account_empty_name(self, client: AsyncClient, auth_headers: dict):
         response = await client.post(
             "/api/v1/sandbox/accounts",
             json={
                 "name": "",
                 "initial_capital": 1000000,
             },
+            headers=auth_headers,
         )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_get_nonexistent_account(self, client: AsyncClient):
-        response = await client.get("/api/v1/sandbox/accounts/99999")
+    async def test_get_nonexistent_account(self, client: AsyncClient, auth_headers: dict):
+        response = await client.get("/api/v1/sandbox/accounts/99999", headers=auth_headers)
         assert response.status_code == 404
 
 
 class TestSandboxDeploymentValidation:
     @pytest.mark.asyncio
-    async def test_create_deployment_invalid_strategy(self, client: AsyncClient, test_account_data):
+    async def test_create_deployment_invalid_strategy(self, client: AsyncClient, auth_headers: dict, test_account_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
@@ -261,14 +282,16 @@ class TestSandboxDeploymentValidation:
                 "name": "Invalid Deployment",
                 "start_date": str(date.today()),
             },
+            headers=auth_headers,
         )
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_create_deployment_invalid_dates(self, client: AsyncClient, test_account_data):
+    async def test_create_deployment_invalid_dates(self, client: AsyncClient, auth_headers: dict, test_account_data):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
+            headers=auth_headers,
         )
         account_id = account_response.json()["id"]
 
@@ -280,5 +303,6 @@ class TestSandboxDeploymentValidation:
                 "start_date": str(date.today() + timedelta(days=30)),
                 "end_date": str(date.today()),
             },
+            headers=auth_headers,
         )
         assert response.status_code == 400
