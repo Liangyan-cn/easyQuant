@@ -27,8 +27,8 @@ async def preload_ohlcv():
                 logger.warning(f"Pool {pool_code} not found, skipping")
                 continue
 
-            pool_detail = await repo.get_with_items(pool.id)
-            stocks = pool_detail.items if pool_detail else []
+            pool_with_items = await repo.get_by_id(pool.id)
+            stocks = pool_with_items.items if pool_with_items else []
             logger.info(f"Loading {len(stocks)} stocks from {pool_code}")
 
             for i, item in enumerate(stocks):
