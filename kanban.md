@@ -20,17 +20,23 @@
 
 ### 功能完整性修复
 
-| 描述                | 模块     | 优先级 | 状态   |
-| ------------------- | -------- | ------ | ------ |
-| 修改密码功能        | 用户系统 | P2     | 待处理 |
-| 部署删除前端入口    | 沙盒系统 | P1     | 待处理 |
-| 账户出金功能        | 沙盒系统 | P2     | 待处理 |
-| 策略参数界面编辑    | 策略系统 | P1     | 待处理 |
-| 策略状态转换 API    | 策略系统 | P2     | 待处理 |
-| 回测取消功能        | 回测系统 | P1     | 待处理 |
-| 因子值单条更新/删除 | 因子系统 | P2     | 待处理 |
-| 因子评估历史展示    | 因子系统 | P2     | 待处理 |
-| 用户资源权限验证    | 全局安全 | P0     | 待处理 |
+| 描述                | 模块     | 优先级 | 状态     |
+| ------------------- | -------- | ------ | -------- |
+| 修改密码功能        | 用户系统 | P2     | 待处理   |
+| 部署删除前端入口    | 沙盒系统 | P1     | 待处理   |
+| 账户出金功能        | 沙盒系统 | P2     | 待处理   |
+| 策略参数界面编辑    | 策略系统 | P1     | 待处理   |
+| 策略状态转换 API    | 策略系统 | P2     | 待处理   |
+| 回测取消功能        | 回测系统 | P1     | 待处理   |
+| 因子值单条更新/删除 | 因子系统 | P2     | 待处理   |
+| 因子评估历史展示    | 因子系统 | P2     | 待处理   |
+| 用户资源权限验证    | 全局安全 | P0     | ✅ 已完成 |
+
+### 数据服务增强
+
+| 描述             | 模块     | 优先级 | 状态     |
+| ---------------- | -------- | ------ | -------- |
+| 财务数据获取调研 | 数据服务 | P1     | ✅ 已完成 |
 
 ### 技术债务 (Tech Debt)
 
@@ -58,6 +64,22 @@
 ---
 
 ## 📜 历史 Sprints
+
+### ✅ Sprint 10: 功能完整性修复与财务数据调研 (已完成)
+**里程碑**: M2.0 - 沙盒系统 (功能完善)
+**目标**: 修复 Backlog 中的功能缺失项，调研财务数据获取方案，提升产品完整度
+**执行日期**: 2026-02-24
+**总结文档**: `docs/sprints/sprint-10-summary.md`
+
+**关键交付物**:
+- ✅ 安全加固: 用户资源权限验证 (Factor/Strategy/Sandbox API)
+- ✅ 调研报告: 财务数据获取方案 (推荐 AKShare)
+
+**测试统计**: 180 个后端测试通过 (100%)
+
+**完工验收**: ✅ 已完成 (3/3 任务, 100%)
+
+---
 
 ### ✅ Sprint 9: 测试覆盖与 CI/CD 建设 (已完成)
 **里程碑**: M2.0 - 沙盒系统 (质量保障)
@@ -234,7 +256,77 @@
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
 | 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |
-| 文档       | 路径                           |
+| 文档       | 路径                            |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       || 文档       | 路径                           |
 | ---------- | ------------------------------ |
 | 产品愿景   | `docs/product/vision.md`       |
 | 用户故事   | `docs/product/user_stories.md` |
