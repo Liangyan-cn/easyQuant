@@ -10,8 +10,8 @@ easyQuant 是一个面向个人投资者的**一站式量化投资管理平台**
 
 ## ✨ 核心功能
 
-| 模块 | 描述 | 状态 |
-|------|------|------|
+| 模块         | 描述                     | 状态     |
+| ------------ | ------------------------ | -------- |
 | **因子管理** | 构建、测试和优化投资因子 | ✅ 已完成 |
 | **策略管理** | 设计、回测和部署量化策略 | ✅ 已完成 |
 | **沙盒测试** | 安全环境中多策略实测评估 | ✅ 已完成 |
@@ -56,7 +56,62 @@ easyQuant/
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 14+
+- Redis 7+ (可选，用于缓存)
 - Git
+
+### 系统依赖安装
+
+**macOS:**
+```bash
+# 使用 Homebrew 安装
+brew install python@3.11 node postgresql@14 redis
+
+# 启动 PostgreSQL 和 Redis 服务
+brew services start postgresql@14
+brew services start redis
+```
+
+**Ubuntu/Debian:**
+```bash
+# 安装 Python 和 Node.js
+sudo apt update
+sudo apt install python3.11 python3.11-venv nodejs npm
+
+# 安装 PostgreSQL
+sudo apt install postgresql postgresql-contrib
+
+# 安装 Redis
+sudo apt install redis-server
+
+# 启动服务
+sudo systemctl start postgresql
+sudo systemctl start redis
+```
+
+**Windows:**
+```powershell
+# 使用 Chocolatey 安装
+choco install python311 nodejs postgresql14 redis-64
+
+# 或手动下载安装：
+# Python: https://www.python.org/downloads/
+# Node.js: https://nodejs.org/
+# PostgreSQL: https://www.postgresql.org/download/windows/
+# Redis: https://github.com/microsoftarchive/redis/releases
+```
+
+### 数据库初始化
+
+```bash
+# 创建数据库用户和数据库
+sudo -u postgres psql
+
+# 在 PostgreSQL 命令行中执行：
+CREATE USER easyquant WITH PASSWORD 'your_password';
+CREATE DATABASE easyquant OWNER easyquant;
+GRANT ALL PRIVILEGES ON DATABASE easyquant TO easyquant;
+\q
+```
 
 ### 后端启动
 
@@ -64,7 +119,7 @@ easyQuant/
 cd backend
 
 # 创建虚拟环境
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate  # Windows
 
@@ -73,9 +128,10 @@ pip install -r requirements.txt
 
 # 配置环境变量
 cp .env.example .env
-# 编辑 .env 文件，配置数据库连接等
+# 编辑 .env 文件，配置数据库连接：
+# DATABASE_URL=postgresql+asyncpg://easyquant:your_password@localhost:5432/easyquant
 
-# 初始化数据库
+# 初始化数据库表结构
 ./venv/bin/alembic upgrade head
 
 # 启动开发服务器
@@ -181,13 +237,13 @@ PYTHONPATH=. ./venv/bin/python app/scripts/cache_loader.py update --pool hs300
 
 本项目集成了一套 Agent 技能，用于辅助项目管理和开发：
 
-| 技能 | 用途 |
-|------|------|
-| `sprint-manager` | Sprint 生命周期管理（启动/健康检查/结束） |
-| `spec-generator` | 生成标准化 PRD 文档 |
-| `tech-design-generator` | 生成技术设计文档 |
-| `task-executor` | 任务拆解和执行指导 |
-| `skill-creator` | 创建新的 Agent 技能 |
+| 技能                    | 用途                                      |
+| ----------------------- | ----------------------------------------- |
+| `sprint-manager`        | Sprint 生命周期管理（启动/健康检查/结束） |
+| `spec-generator`        | 生成标准化 PRD 文档                       |
+| `tech-design-generator` | 生成技术设计文档                          |
+| `task-executor`         | 任务拆解和执行指导                        |
+| `skill-creator`         | 创建新的 Agent 技能                       |
 
 ## 📋 项目管理
 
