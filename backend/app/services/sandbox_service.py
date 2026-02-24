@@ -208,7 +208,8 @@ class SandboxService:
 
         one_year_ago = date.today() - timedelta(days=365)
         if data.start_date < one_year_ago:
-            raise BadRequestException(detail="Start date cannot be earlier than 1 year ago")
+            logger.warning(f"Start date {data.start_date} is earlier than 1 year ago ({one_year_ago})")
+            raise BadRequestException(detail=f"Start date cannot be earlier than 1 year ago ({one_year_ago})")
 
         deployment = await self.deployment_repo.create(
             account_id,

@@ -39,20 +39,34 @@
 - `backend/app/services/stock_pool_init.py` - 系统池初始化脚本
 - `backend/tests/test_stock_pool.py` - 9 个测试用例 (100% 通过)
 
-#### TASK-2: 数据缓存方案 (P1)
+#### TASK-2: 数据缓存方案 (P1) ✅
 
 **说明**: 实现股票池内数据的内存缓存机制，支持启动预加载和增量更新，提升数据访问效率
 
 **依赖**: TASK-1
 
 **子任务**:
-- [ ] 设计缓存数据结构 (股票池→股票→数据类型)
-- [ ] 实现启动时预加载逻辑 (加载股票池内所有股票数据)
-- [ ] 实现增量更新机制 (每日收盘后更新当日数据)
-- [ ] 实现缓存状态查询 API (查看缓存命中率、数据量等)
-- [ ] 集成定时任务调度 (APScheduler)
+- [x] 设计缓存数据结构 (股票池→股票→数据类型)
+- [x] 实现启动时预加载逻辑 (加载股票池内所有股票数据)
+- [x] 实现增量更新机制 (每日收盘后更新当日数据)
+- [x] 实现缓存状态查询 API (查看缓存命中率、数据量等)
+- [ ] 集成定时任务调度 (APScheduler) - 改为脚本手动触发
 
-**交付产物**: {任务完成后补充}
+**交付产物**:
+- `backend/app/schemas/cache.py` - 缓存 Schema 定义
+- `backend/app/services/cache_service.py` - CacheService 核心服务 (Parquet 持久化)
+- `backend/app/scripts/cache_loader.py` - 预加载/更新脚本
+- `backend/app/api/v1/endpoints/cache.py` - 缓存状态 API
+- `backend/tests/test_cache.py` - 4 个测试用例 (100% 通过)
+
+**使用方式**:
+```bash
+# 预加载沪深300+中证500数据
+cd backend && ./venv/bin/python -m app.scripts.cache_loader preload
+
+# 查看缓存状态
+cd backend && ./venv/bin/python -m app.scripts.cache_loader status
+```
 
 ---
 
@@ -304,7 +318,14 @@
 | API 参考   | `docs/api-reference.md`         | API 接口文档         |
 | 代码规范   | `docs/tech/coding_standards.md` | 编码规范与最佳实践   |
 | CI/CD 文档 | `docs/tech/cicd.md`             | 持续集成与部署流程   |
-| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |  | 文档 | 路径 |
+| 环境配置   | `docs/tech/setup.md`            | 开发环境配置指南     |      | 文档 | 路径 |
+| ---------- | ------------------------------  |
+| 产品愿景   | `docs/product/vision.md`        |
+| 用户故事   | `docs/product/user_stories.md`  |
+| 里程碑规划 | `docs/product/milestones.md`    |
+| 技术架构   | `docs/tech/architecture.md`     |
+| API 参考   | `docs/api-reference.md`         |
+| 数据模型   | `docs/tech/data_model.md`       |                      | 文档 | 路径 |
 | ---------- | ------------------------------  |
 | 产品愿景   | `docs/product/vision.md`        |
 | 用户故事   | `docs/product/user_stories.md`  |
