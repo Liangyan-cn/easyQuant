@@ -1,6 +1,32 @@
 import pytest
 from datetime import date, timedelta
+from unittest.mock import patch, MagicMock
 from httpx import AsyncClient
+
+import app.services.sandbox_engine as sandbox_engine_module
+
+
+@pytest.fixture
+def mock_stock_history():
+    mock_response = MagicMock()
+    mock_response.items = [
+        MagicMock(
+            date=date.today() - timedelta(days=i),
+            open=10.0 + i * 0.1,
+            high=10.5 + i * 0.1,
+            low=9.5 + i * 0.1,
+            close=10.2 + i * 0.1,
+            volume=1000000,
+        )
+        for i in range(30)
+    ]
+    return mock_response
+
+
+@pytest.fixture
+def patch_stock_history(mock_stock_history):
+    with patch.object(sandbox_engine_module, 'get_stock_history', return_value=mock_stock_history):
+        yield
 
 
 @pytest.fixture
@@ -20,6 +46,7 @@ def test_deployment_data():
         "start_date": str(date.today()),
         "end_date": str(date.today() + timedelta(days=30)),
         "allocation_ratio": 0.8,
+        "stock_pool": ["000001"],
     }
 
 
@@ -177,7 +204,7 @@ class TestSandboxDeploymentAPI:
         assert response.json()["id"] == deployment_id
 
     @pytest.mark.asyncio
-    async def test_run_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
+    async def test_run_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data, patch_stock_history):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
@@ -197,7 +224,7 @@ class TestSandboxDeploymentAPI:
         assert response.json()["status"] == "running"
 
     @pytest.mark.asyncio
-    async def test_stop_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data):
+    async def test_stop_deployment(self, client: AsyncClient, auth_headers: dict, test_account_data, test_deployment_data, patch_stock_history):
         account_response = await client.post(
             "/api/v1/sandbox/accounts",
             json=test_account_data,
