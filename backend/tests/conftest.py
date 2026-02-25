@@ -1,5 +1,7 @@
 import os
+from datetime import date, timedelta
 from typing import AsyncGenerator
+from unittest.mock import MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -114,3 +116,104 @@ async def auth_headers(client: AsyncClient, test_user_data: dict) -> dict:
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+def _create_mock_stock_list():
+    from app.schemas.stock import StockInfo
+    return [
+        StockInfo(code="600519", name="贵州茅台", market="SH", industry="白酒"),
+        StockInfo(code="000001", name="平安银行", market="SZ", industry="银行"),
+        StockInfo(code="000002", name="万科A", market="SZ", industry="房地产"),
+    ]
+
+
+def _create_mock_ohlcv_items(code: str, start: date, end: date):
+    from app.schemas.stock import OHLCVItem
+    items = []
+    current = start
+    price = 100.0
+    while current <= end:
+        if current.weekday() < 5:
+            items.append(OHLCVItem(
+                date=current,
+                open=price,
+                high=price * 1.02,
+                low=price * 0.98,
+                close=price * 1.01,
+                volume=1000000,
+                amount=price * 1000000,
+            ))
+            price *= 1.001
+        current += timedelta(days=1)
+    return items
+
+
+def _create_mock_history_response(code: str, period: str, start: date, end: date):
+    from app.schemas.stock import StockHistoryResponse
+    return StockHistoryResponse(
+        code=code,
+        period=period,
+        items=_create_mock_ohlcv_items(code, start, end),
+    )
+
+
+@pytest.fixture(autouse=True)
+def mock_akshare_apis():
+    from app.schemas.stock import (
+        StockListResponse, BalanceSheetResponse, IncomeStatementResponse,
+        CashFlowResponse, FinancialIndicatorResponse, ValuationResponse, DividendResponse
+    )
+    
+    mock_stocks = _create_mock_stock_list()
+    
+    def mock_get_stock_list(page=1, size=20, keyword=None, market=None, pool_code=None):
+        filtered = mock_stocks
+        if keyword:
+            filtered = [s for s in filtered if keyword in s.code or keyword in s.name]
+        if market:
+            filtered = [s for s in filtered if s.market == market]
+        start_idx = (page - 1) * size
+        end_idx = start_idx + size
+        return StockListResponse(
+            items=filtered[start_idx:end_idx],
+            total=len(filtered),
+            page=page,
+            size=size,
+        )
+    
+    def mock_get_stock_history(code, period="daily", start=None, end=None):
+        if start is None:
+            start = date.today() - timedelta(days=30)
+        if end is None:
+            end = date.today()
+        return _create_mock_history_response(code, period, start, end)
+    
+    def mock_get_balance_sheet(code, limit=8):
+        return BalanceSheetResponse(code=code, items=[])
+    
+    def mock_get_income_statement(code, limit=8):
+        return IncomeStatementResponse(code=code, items=[])
+    
+    def mock_get_cash_flow(code, limit=8):
+        return CashFlowResponse(code=code, items=[])
+    
+    def mock_get_financial_indicators(code, limit=8):
+        return FinancialIndicatorResponse(code=code, items=[])
+    
+    def mock_get_valuation(code, limit=30):
+        return ValuationResponse(code=code, items=[])
+    
+    def mock_get_dividend(code):
+        return DividendResponse(code=code, items=[])
+    
+    with patch("app.api.v1.endpoints.data.get_stock_list", side_effect=mock_get_stock_list), \
+         patch("app.api.v1.endpoints.data.get_stock_history", side_effect=mock_get_stock_history), \
+         patch("app.api.v1.endpoints.data.get_balance_sheet", side_effect=mock_get_balance_sheet), \
+         patch("app.api.v1.endpoints.data.get_income_statement", side_effect=mock_get_income_statement), \
+         patch("app.api.v1.endpoints.data.get_cash_flow", side_effect=mock_get_cash_flow), \
+         patch("app.api.v1.endpoints.data.get_financial_indicators", side_effect=mock_get_financial_indicators), \
+         patch("app.api.v1.endpoints.data.get_valuation", side_effect=mock_get_valuation), \
+         patch("app.api.v1.endpoints.data.get_dividend", side_effect=mock_get_dividend), \
+         patch("app.services.sandbox_engine.get_stock_history", side_effect=mock_get_stock_history), \
+         patch("app.services.sandbox_engine.get_stock_list", side_effect=mock_get_stock_list):
+        yield
