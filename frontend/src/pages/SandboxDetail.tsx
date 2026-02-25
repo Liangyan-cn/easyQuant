@@ -35,6 +35,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { sandboxApi } from '@/api/sandbox';
 import { strategyApi } from '@/api/strategy';
+import NetValueChart from '@/components/NetValueChart';
 import type {
   SandboxAccountDetail,
   SandboxPosition,
@@ -643,6 +644,10 @@ const SandboxDetail: React.FC = () => {
             {dayjs(account.updated_at).format('YYYY-MM-DD HH:mm')}
           </Descriptions.Item>
         </Descriptions>
+        <NetValueChart
+          dailyValues={daily_values}
+          initialCapital={account.initial_capital}
+        />
       </Card>
 
       <Card>
